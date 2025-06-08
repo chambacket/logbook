@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='images/faculty.png') }}">
+    <title>Faculty Borrowing Logbook System</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @keyframes blob {
+            0% { border-radius: 60% 40% 30% 70%/60% 30% 70% 40%; }
+            50% { border-radius: 30% 60% 70% 40%/50% 60% 30% 60%; }
+            100% { border-radius: 60% 40% 30% 70%/60% 30% 70% 40%; }
+        }
+        .animate-blob {
+            animation: blob 4s infinite; /* Changed from 7s to 4s */
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .animate-float {
+            animation: float 2s ease-in-out infinite; /* 2s duration */
+        }
+        
+        .animate-fade-up {
+            animation: fadeUp 0.6s ease-out; /* 0.6s duration */
+        }
+        
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Existing animations... */
+
+        html {
+            scroll-behavior: smooth;
+            scroll-snap-type: y proximity;
+        }
+
+        section {
+            scroll-margin-top: 80px; /* Adjust based on your header height */
+        }
+
+        /* Add intersection observer animations */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Add scroll progress indicator */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(to right, #F59E0B, #3B82F6);
+            transform-origin: 0 50%;
+            transform: scaleX(0);
+            transition: transform 0.2s ease;
+            z-index: 1000;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .animate-pulse {
+            animation: pulse 3s infinite;
+        }
+        
+        .bg-gradient-overlay {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.4) 100%);
+        }
+    </style>
+</head>
+<body class="font-[Poppins] overflow-x-hidden">
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-gray-900 bg-opacity-95 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="logo">
+                <a href="https://www.youtube.com/watch?v=UIp6_0kct_U" target="_blank">
+                    <img src="{{ url_for('static', filename='images/digital icon.png') }}" 
+                         alt="FBLS Logo" 
+                         class="w-12 h-12 transform hover:scale-110 transition-transform duration-300">
+                </a>
+            </div>
+            <nav class="hidden md:block">
+                <ul class="flex space-x-8">
+                    <li><a href="#hero" class="text-white hover:text-yellow-400 transition-colors duration-300">Home</a></li>
+                    <li><a href="#about" class="text-white hover:text-yellow-400 transition-colors duration-300">About</a></li>
+                    <li><a href="#features" class="text-white hover:text-yellow-400 transition-colors duration-300">Features</a></li>
+                    <li><a href="#contact" class="text-white hover:text-yellow-400 transition-colors duration-300">Contact</a></li>
+                </ul>
+            </nav>
+            <div>
+                <a href="{{ url_for('auth') }}" 
+                   class="bg-yellow-500 text-gray-900 px-6 py-2 rounded-full font-semibold 
+                          hover:bg-yellow-400 transition-colors duration-300">
+                    Login
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section with Blob -->
+    <section id="hero" class="relative min-h-screen pt-20 bg-gray-900 snap-start">
+        <!-- Animated Blobs -->
+        <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute -top-48 -right-48 w-96 h-96 bg-yellow-500 opacity-20 animate-blob 
+                        transform transition-all duration-300"></div>
+            <div class="absolute -bottom-48 -left-48 w-96 h-96 bg-blue-500 opacity-20 animate-blob 
+                        transform transition-all duration-300" 
+                 style="animation-delay: -2s;"></div>
+        </div>
+
+        <!-- Content -->
+        <div class="relative max-w-7xl mx-auto px-6 py-20">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <!-- Left Content -->
+                <div class="space-y-8 animate-fade-up">
+                    <h1 class="text-4xl md:text-5xl font-bold text-white leading-tight transform transition-all duration-300">
+                        Faculty Borrowing Logbook System
+                    </h1>
+                    <h2 class="text-2xl md:text-3xl text-gray-300 transform transition-all duration-300">
+                        Streamline Your 
+                        <span class="text-yellow-500 font-bold">EQUIPMENT MANAGEMENT</span>
+                    </h2>
+                    <p class="text-gray-400 text-lg transform transition-all duration-300">
+                        Efficiently manage and track faculty equipment borrowing with our state-of-the-art digital system.
+                    </p>
+                    <a href="{{ url_for('auth') }}" 
+                       class="inline-block bg-yellow-500 text-gray-900 px-8 py-3 rounded-full font-bold
+                              hover:bg-yellow-400 transform hover:-translate-y-1 transition-all duration-200">
+                        Get Started
+                    </a>
+                </div>
+
+                <!-- Right Image -->
+                <div class="relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-yellow-500 to-blue-500 opacity-20 rounded-3xl animate-blob"
+                         style="animation-duration: 4s;"></div>
+                    <img src="{{ url_for('static', filename='images/cspscc.png') }}" 
+                         alt="Equipment Management System"
+                         class="relative z-10 w-full h-auto rounded-3xl shadow-2xl transform hover:scale-105 
+                                transition-transform duration-300 animate-float">
+                </div>
+            </div>
+        </div>
+
+        <!-- Wave Separator -->
+        <div class="absolute bottom-0 left-0 w-full overflow-hidden leading-none">
+            <svg class="relative block w-full h-24" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" 
+                      class="fill-white"></path>
+            </svg>
+        </div>
+    </section>
+
+    <section id="about" class="relative min-h-screen py-20 bg-gradient-to-b from-white to-gray-50 snap-start overflow-hidden">
+        <!-- Background Blobs -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute top-0 right-0 w-96 h-96 bg-yellow-500 opacity-5 animate-blob"></div>
+            <div class="absolute bottom-0 left-0 w-96 h-96 bg-blue-500 opacity-5 animate-blob" 
+                 style="animation-delay: -2s;"></div>
+        </div>
+
+        <div class="container mx-auto px-4 relative z-10">
+            <!-- Section Header -->
+            <div class="text-center mb-16 max-w-3xl mx-auto">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                    About Our System
+                </h2>
+                <p class="text-lg text-gray-600 leading-relaxed animate-fade-up">
+                    The Faculty Borrowing Logbook System is designed to revolutionize how the IECS department manages its equipment and resources. 
+                    Our digital solution replaces manual processes, enhancing efficiency and accountability.
+                </p>
+            </div>
+
+            <!-- Features Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+                <!-- Digital Management Card -->
+                <div class="bg-white rounded-xl shadow-lg p-8 transform hover:-translate-y-2 transition-all duration-300 hover:shadow-2xl">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-gradient-to-r from-yellow-500 to-yellow-300 opacity-20 rounded-full animate-blob"></div>
+                        <img src="{{ url_for('static', filename='images/laptop.png') }}" 
+                             alt="Digital Icon" 
+                             class="w-20 h-20 mx-auto mb-6 relative z-10 animate-float">
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Digital Management</h3>
+                    <p class="text-gray-600">Fully digital system for borrowing and returning equipment with real-time updates and automated processes.</p>
+                </div>
+
+                <!-- Enhanced Tracking Card -->
+                <div class="bg-white rounded-xl shadow-lg p-8 transform hover:-translate-y-2 transition-all duration-300 hover:shadow-2xl">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-300 opacity-20 rounded-full animate-blob" 
+                             style="animation-delay: -1s;"></div>
+                        <img src="{{ url_for('static', filename='images/tracking.png') }}" 
+                             alt="Tracking Icon" 
+                             class="w-20 h-20 mx-auto mb-6 relative z-10 animate-float"
+                             style="animation-delay: -0.5s;">
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Enhanced Tracking</h3>
+                    <p class="text-gray-600">Real-time monitoring of equipment status, location, and availability with detailed history logs.</p>
+                </div>
+
+                <!-- User-Friendly Card -->
+                <div class="bg-white rounded-xl shadow-lg p-8 transform hover:-translate-y-2 transition-all duration-300 hover:shadow-2xl">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-gradient-to-r from-green-500 to-green-300 opacity-20 rounded-full animate-blob"
+                             style="animation-delay: -2s;"></div>
+                        <img src="{{ url_for('static', filename='images/userfriendly.png') }}" 
+                             alt="User-Friendly Icon" 
+                             class="w-20 h-20 mx-auto mb-6 relative z-10 animate-float"
+                             style="animation-delay: -1s;">
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">User-Friendly</h3>
+                    <p class="text-gray-600">Intuitive interface designed for easy navigation and quick access to essential features.</p>
+                </div>
+            </div>
+
+            <!-- Stats Section -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20">
+                <div class="text-center">
+                    <h4 class="text-4xl font-bold text-yellow-500 mb-2">Add</h4>
+                    <p class="text-gray-600">Equipment Items</p>
+                </div>
+                <div class="text-center">
+                    <h4 class="text-4xl font-bold text-blue-500 mb-2">User</h4>
+                    <p class="text-gray-600">Friendly</p>
+                </div>
+                <div class="text-center">
+                    <h4 class="text-4xl font-bold text-green-500 mb-2">99%</h4>
+                    <p class="text-gray-600">Return Rate</p>
+                </div>
+                <div class="text-center">
+                    <h4 class="text-4xl font-bold text-purple-500 mb-2">24/7</h4>
+                    <p class="text-gray-600">System Uptime</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="relative min-h-screen py-20 bg-gradient-to-b from-gray-100 to-white snap-start overflow-hidden">
+        <!-- Background Blobs -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute top-0 right-0 w-96 h-96 bg-blue-500 opacity-5 animate-blob"></div>
+            <div class="absolute bottom-0 left-0 w-96 h-96 bg-yellow-500 opacity-5 animate-blob" 
+                 style="animation-delay: -2s;"></div>
+        </div>
+
+        <div class="container mx-auto px-4 relative z-10">
+            <!-- Section Header -->
+            <div class="text-center mb-16 max-w-3xl mx-auto">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-yellow-500 bg-clip-text text-transparent animate-fade-up">
+                    Key Features
+                </h2>
+                <p class="text-lg text-gray-600 leading-relaxed animate-fade-up">
+                    Discover the powerful features that make our system the perfect solution for managing equipment borrowing.
+                </p>
+            </div>
+
+            <!-- Features Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Equipment Catalog -->
+                <div class="bg-white rounded-xl shadow-lg p-8 transform hover:-translate-y-2 transition-all duration-300 hover:shadow-2xl group">
+                    <div class="relative mb-6">
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-300 opacity-20 rounded-full animate-blob group-hover:opacity-30 transition-opacity"></div>
+                        <img src="{{ url_for('static', filename='images/Equipment Catalog.png') }}" 
+                             alt="Equipment Catalog" 
+                             class="w-20 h-20 mx-auto relative z-10 animate-float transform group-hover:scale-110 transition-transform duration-300">
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800 group-hover:text-blue-600 transition-colors">Equipment Catalog</h3>
+                    <p class="text-gray-600 group-hover:text-gray-700 transition-colors">Comprehensive listing of all available equipment with detailed specifications and status.</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-8 transform hover:-translate-y-2 transition-all duration-300 hover:shadow-2xl group">
+                    <div class="relative mb-6">
+                        <div class="absolute inset-0 bg-gradient-to-r from-yellow-500 to-yellow-300 opacity-20 rounded-full animate-blob group-hover:opacity-30 transition-opacity"
+                             style="animation-delay: -1s;"></div>
+                        <img src="{{ url_for('static', filename='images/Reservation System.png') }}" 
+                             alt="Reservation System" 
+                             class="w-20 h-20 mx-auto relative z-10 animate-float transform group-hover:scale-110 transition-transform duration-300"
+                             style="animation-delay: -0.5s;">
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800 group-hover:text-yellow-600 transition-colors">Reservation System</h3>
+                    <p class="text-gray-600 group-hover:text-gray-700 transition-colors">Easy-to-use booking system with real-time availability updates and scheduling.</p>
+                </div>
+
+                <!-- Real-time Tracking -->
+                <div class="bg-white rounded-xl shadow-lg p-8 transform hover:-translate-y-2 transition-all duration-300 hover:shadow-2xl group">
+                    <div class="relative mb-6">
+                        <div class="absolute inset-0 bg-gradient-to-r from-green-500 to-green-300 opacity-20 rounded-full animate-blob group-hover:opacity-30 transition-opacity"
+                             style="animation-delay: -1.5s;"></div>
+                        <img src="{{ url_for('static', filename='images/Real Time Tracking.png') }}" 
+                             alt="Real-time Tracking" 
+                             class="w-20 h-20 mx-auto relative z-10 animate-float transform group-hover:scale-110 transition-transform duration-300"
+                             style="animation-delay: -1s;">
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800 group-hover:text-green-600 transition-colors">Real-time Tracking</h3>
+                    <p class="text-gray-600 group-hover:text-gray-700 transition-colors">Monitor equipment status and location with instant updates and notifications.</p>
+                </div>
+
+                <!-- Automated Reminders -->
+                <div class="bg-white rounded-xl shadow-lg p-8 transform hover:-translate-y-2 transition-all duration-300 hover:shadow-2xl group">
+                    <div class="relative mb-6">
+                        <div class="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-300 opacity-20 rounded-full animate-blob group-hover:opacity-30 transition-opacity"
+                             style="animation-delay: -2s;"></div>
+                        <img src="{{ url_for('static', filename='images/Automated Reminder.png') }}" 
+                             alt="Automated Reminders" 
+                             class="w-20 h-20 mx-auto relative z-10 animate-float transform group-hover:scale-110 transition-transform duration-300"
+                             style="animation-delay: -1.5s;">
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800 group-hover:text-purple-600 transition-colors">Automated Reminders</h3>
+                    <p class="text-gray-600 group-hover:text-gray-700 transition-colors">Smart notification system for due dates, returns, and maintenance schedules.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="relative min-h-screen py-20 bg-white snap-start">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Contact</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="bg-gray-100 rounded-lg p-6 text-center">
+                    <img src="{{ url_for('static', filename='images/barbs.jpg') }}" alt="Angelika Barbsobia" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover">
+                    <h3 class="text-xl font-semibold mb-2">Angelika Barbsobia</h3>
+                    <p class="text-gray-600 mb-2">ʌ_ʌ</p>
+                    <p class="mb-2">A Sweet Kind Hearted One</p>
+                    <p class="text-sm text-gray-500">@gmail.com</p>
+                </div>
+                <div class="bg-gray-100 rounded-lg p-6 text-center">
+                    <img src="{{ url_for('static', filename='images/peemak.jpg') }}" alt="PeeMak & Nak" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover">
+                    <h3 class="text-xl font-semibold mb-2">PeeMak & Nak</h3>
+                    <p class="text-gray-600 mb-2">👽</p>
+                    <p class="mb-2 text-sm">Drifting through stardust and echoes of forgotten dreams, I weave words like constellations, lost in moonbeam streams. A seeker of whispers, a lover of midnight skies, Dancing with the wind where the lonely heart lies</p>
+                    <p class="text-sm text-gray-500"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2a7a4f44435e4f445e65444f6a4d474b434604494547">[email&#160;protected]</a></p>
+                </div>
+                <div class="bg-gray-100 rounded-lg p-6 text-center">
+                    <img src="{{ url_for('static', filename='images/benjoy.jpg')}}" alt="Benjoy Pogi" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover">
+                    <h3 class="text-xl font-semibold mb-2">Benjoy Pogi</h3>
+                    <p class="text-gray-600 mb-2">🗿</p>
+                    <p class="mb-2 text-sm">A Sigma mind, a coding knight, Debugging bugs deep in the night. Loops and logic, my heart's delight, Stack Overflow is my guiding light!</p>
+                    <p class="text-sm text-gray-500"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2e6b5d4a5c4f5d6e49434f4742004d4143">[email&#160;protected]</a></p>
+                </div>
+                <div class="bg-gray-100 rounded-lg p-6 text-center">
+                    <img src="{{ url_for('static', filename='images/ace.jpg') }}" alt="Ace-Kun" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover">
+                    <h3 class="text-xl font-semibold mb-2">Ace-Kun</h3>
+                    <p class="text-gray-600 mb-2">😈</p>
+                    <p class="mb-2 text-sm">Once, love was my lighthouse, now just a fading glow, A story unfinished, written in sorrow's flow. I leave pieces of me in every goodbye, Haunted by echoes of a love that won't die</p>
+                    <p class="text-sm text-gray-500"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7319100514331d10121a31161c10181d5f121e1c">[email&#160;protected]</a></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <p>&copy; 2025 Faculty Borrowing Logbook System. Fun Project.</p>
+                <div class="flex space-x-4 mt-4 md:mt-0">
+                    <a href="https://www.facebook.com/ka.benjoy.3" target="_blank" class="hover:text-blue-400">
+                        <img src="{{ url_for('static', filename='/images/communication.png') }}" alt="Facebook" class="w-6 h-6">
+                    </a>
+                    <a href="https://twitter.com" target="_blank" class="hover:text-blue-400">
+                        <img src="{{ url_for('static', filename='/images/twitter.png') }}" alt="Twitter" class="w-6 h-6">
+                    </a>
+                    <a href="https://www.youtube.com/watch?v=UIp6_0kct_U" target="_blank" class="hover:text-red-400">
+                        <img src="{{ url_for('static', filename='/images/youtube.png') }}" alt="YouTube" class="w-6 h-6">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Smooth scroll function
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const section = document.querySelector(this.getAttribute('href'));
+                    section.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            // Highlight active section in navigation
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('nav a');
+
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    if (scrollY >= (sectionTop - sectionHeight / 3)) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('text-yellow-400');
+                    if (link.getAttribute('href').substring(1) === current) {
+                        link.classList.add('text-yellow-400');
+                    }
+                });
+            });
+        });
+    </script>
+    <div class="scroll-progress"></div>
+    <script src="{{ url_for('static', filename='js/scroll.js') }}"></script>
+    <script>
+        window.addEventListener('scroll', () => {
+            const winScroll = document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.querySelector('.scroll-progress').style.transform = `scaleX(${scrolled / 100})`;
+        });
+
+        // Intersection Observer for fade-in sections
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        });
+
+        document.querySelectorAll('section > div').forEach((section) => {
+            section.classList.add('fade-in-section');
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='images/faculty.png') }}">
+    <title>{% block title %}Faculty Borrower LogBook{% endblock %}</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .sidebar {
+            width: 260px;
+            min-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color: #2A303C;
+            z-index: 40;
+        }
+
+        .main-content {
+            margin-left: 260px;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        /* Dropdown styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            min-width: 200px;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            z-index: 50;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+        }
+
+        .dropdown-content.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Hover effects for dropdown items */
+        .dropdown-content a {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f3f4f6;
+        }
+
+        /* Active state for dropdown button */
+        .dropdown button:focus {
+            outline: 2px solid #e5e7eb;
+            border-radius: 0.375rem;
+        }
+
+        /* Flash message styles */
+        .flash-message {
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out;
+            transform: translateX(0);
+            animation: slideIn 0.3s ease-out;
+        }
+    
+        .flash-message.fade-out {
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+    
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Enhanced notification bell styling */
+        #notificationButton {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        #notificationButton:hover {
+            transform: scale(1.1);
+        }
+
+        #notificationBadge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            animation: notificationBadgeGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes notificationBadgeGlow {
+            0%, 100% { box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+            50% { box-shadow: 0 2px 8px rgba(239, 68, 68, 0.6); }
+        }
+
+        /* Notification menu styling */
+        #notificationMenu {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Notification item hover effects */
+        .notification-item {
+            transition: all 0.2s ease;
+        }
+
+        .notification-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Urgent notification styling */
+        .notification-urgent {
+            background: linear-gradient(135deg, rgba(254, 202, 202, 0.3), rgba(252, 165, 165, 0.2));
+            border-left: 4px solid #ef4444;
+        }
+
+        /* Custom scrollbar for notification menu */
+        #notificationMenu::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #notificationMenu::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        #notificationMenu::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        #notificationMenu::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Additional utility styles */
+        .has-overdue-items {
+            animation: urgentAlert 2s ease-in-out;
+        }
+        
+        @keyframes urgentAlert {
+            0%, 100% { background-color: inherit; }
+            50% { background-color: rgba(254, 202, 202, 0.1); }
+        }
+        
+        #notificationBadge.animate-pulse {
+            animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+
+        /* Table and dashboard animations */
+        #borrowersTableBody {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .px-5.py-4.bg-white.border-t {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .pagination-button {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .pagination-button:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Most borrowed items animations */
+        @keyframes growWidth {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+
+        .bg-blue-500.rounded-full {
+            animation: growWidth 1s ease-out;
+        }
+
+        .from-gray-50:hover {
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            transform: translateY(-4px);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-100">
+    <!-- Flash Messages -->
+    <div id="flashMessages" class="fixed top-4 right-4 z-50 w-80">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message bg-{{ 'green' if category == 'success' else 'red' }}-500 text-white px-6 py-4 rounded-lg mb-4 shadow-lg">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+ 
+    <aside class="sidebar text-gray-300 p-6">
+        <!-- Logo and Brand -->
+        <div class="flex items-center space-x-2 mb-8">
+            <img src="{{ url_for('static', filename='images/digital icon.png') }}" alt="Logo" class="w-8 h-8">
+            <span class="text-xl font-bold">HEHE</span>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="space-y-4">
+            <!-- Dashboard Link -->
+            <a href="{{ url_for('dashboard') }}" 
+               class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 {% if request.endpoint == 'dashboard' %}bg-gray-700{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+
+            <!-- Equipment Link -->
+            <a href="{{ url_for('equipment') }}" 
+               class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 {% if request.endpoint == 'equipment' %}bg-gray-700{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <span>Equipment</span>
+            </a>
+
+            <!-- Borrow Equipment Link -->
+            <a href="{{ url_for('borrow_equipment') }}" 
+               class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 {% if request.endpoint == 'borrow_equipment' %}bg-gray-700{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                <span>Borrow Equipment</span>
+            </a>
+        </nav>
+
+        <div class="absolute bottom-0 left-0 right-0 p-6">
+            <div class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700">
+                <img src="{{ url_for('static', filename='images/faculty.png') }}" 
+                     alt="Profile" 
+                     class="w-8 h-8 rounded-full">
+                <div class="flex-1">
+                    <p class="text-sm font-medium">{{ session['faculty_name'] }}</p>
+                    <p class="text-xs text-gray-400">Faculty Member</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        {% block content %}
+        <!-- Header -->
+        <header class="bg-white shadow-lg">
+            <div class="flex items-center justify-between h-16 px-6">
+                <div class="flex items-center">
+                    <button id="sidebar-toggle" class="p-2 rounded-md hover:bg-gray-200 lg:hidden">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                    <h1 class="ml-4 text-xl font-semibold">ITEM BORROWING SYSTEM</h1>
+                </div>
+                <div class="flex items-center">
+                    <div class="flex items-center gap-4">
+                        <!-- Notification Bell -->
+                        <div class="relative inline-block">
+                            <button id="notificationButton" class="relative p-2 text-gray-600 hover:text-gray-800 focus:outline-none">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                </svg>
+                                <span id="notificationBadge" 
+                                      class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                </span>
+                            </button>
+                            
+                            <!-- Notification Dropdown -->
+                            <div id="notificationMenu" 
+                                 class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50">
+                                <div class="p-4 border-b border-gray-200">
+                                    <h3 class="text-lg font-semibold text-gray-800">Equipment Return Notifications</h3>
+                                </div>
+                                <div id="notificationList" class="max-h-96 overflow-y-auto divide-y divide-gray-100">
+                                    <!-- Notifications will be inserted here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Profile Dropdown -->
+                        <div class="dropdown">
+                            <button class="flex items-center space-x-3 focus:outline-none" id="userDropdown">
+                                <span class="text-gray-700">{{ session['faculty_name'] }}</span>
+                                <img class="h-8 w-8 rounded-full" src="{{ url_for('static', filename='images/faculty.png') }}" alt="User">
+                            </button>
+                            <div class="dropdown-content" id="dropdownMenu">
+                                <div class="py-2">
+                                    <div class="border-t border-gray-200"></div>
+                                    <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                        Logout
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="p-6">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Total Items -->
+                <div class="bg-gradient-to-br from-red-400 to-pink-300 rounded-lg p-6 text-white">
+                    <h3 class="text-lg font-semibold mb-2">Items</h3>
+                    <p class="text-3xl font-bold mb-2">{{ total_items }}</p>
+                    <div class="flex items-center text-sm">
+                        <span>{{ total_items }} Total Quantity</span>
+                    </div>
+                </div>
+            
+                <!-- Issued Items -->
+                <div class="bg-gradient-to-br from-blue-400 to-green-500 rounded-lg p-6 text-white">
+                    <h3 class="text-lg font-semibold mb-2">Issued</h3>
+                    <p class="text-3xl font-bold mb-2">{{ issued_items }}</p>
+                    <div class="flex items-center text-sm">
+                        <span>{{ issued_percentage }}% Percent</span>
+                    </div>
+                </div>
+            
+                <!-- Returned Items -->
+                <div class="bg-gradient-to-br from-purple-400 to-red-500 rounded-lg p-6 text-white">
+                    <h3 class="text-lg font-semibold mb-2">Returned</h3>
+                    <p class="text-3xl font-bold mb-2">{{ returned_items }}</p>
+                    <div class="flex items-center text-sm">
+                        <span>{{ returned_percentage }}% Percent</span>
+                    </div>
+                </div>
+            
+                <!-- Total Members -->
+                <div class="bg-gradient-to-br from-pink-400 to-purple-500 rounded-lg p-6 text-white">
+                    <h3 class="text-lg font-semibold mb-2">Members</h3>
+                    <p class="text-3xl font-bold mb-2">{{ total_members }}</p>
+                    <div class="flex items-center text-sm">
+                        <span>{{ total_members }} Total Members</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Most Borrowed Items Section -->
+            <div class="mb-8">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold mb-6">Most Borrowed Items</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {% for item in most_borrowed %}
+                        <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 transform hover:-translate-y-1 transition-all duration-300">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                    </svg>
+                                </div>
+                                <span class="text-2xl font-bold text-blue-500">{{ item.borrow_count }}</span>
+                            </div>
+                            <h3 class="font-semibold text-gray-800 mb-2">{{ item.name }}</h3>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-500 rounded-full h-2 transition-all duration-500" 
+                                     style="width: {{ (item.borrow_count / most_borrowed_max * 100)|round|int }}%">
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">
+                                {{ (item.borrow_count / most_borrowed_max * 100)|round|int }}% of total borrows
+                            </p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tables -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Latest Borrowed -->
+                <div class="bg-white rounded-lg shadow-lg p-6 h-[500px] flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">LATEST BORROWED ITEM</h2>
+                    </div>
+                    <div class="flex-1" id="borrowedTableContainer">
+                        <!-- Table content will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Latest Returned -->
+                <div class="bg-white rounded-lg shadow-lg p-6 h-[500px] flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">LATEST RETURNED ITEM</h2>
+                    </div>
+                    <div class="flex-1" id="returnedTableContainer">
+                        <!-- Table content will be inserted here -->
+                    </div>
+                </div>
+            </div>
+            {% endblock %}
+        </main>
+    </div>
+
+    {% block scripts %}
+    <script>
+        // Dashboard Table Management
+        let currentBorrowedPage = 1;
+        let currentReturnedPage = 1;
+        let isLoading = {
+            borrowed: false,
+            returned: false
+        };
+
+        // Notification System Implementation
+        class NotificationManager {
+            constructor() {
+                this.lastNotificationCount = 0;
+                this.notificationSound = null;
+                this.checkInterval = 30000; // Check every 30 seconds
+                this.initialize();
+            }
+
+            initialize() {
+                // Request notification permission
+                if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+                    Notification.requestPermission();
+                }
+
+                // Create notification sound
+                this.createNotificationSound();
+
+                // Set up event listeners
+                this.setupEventListeners();
+
+                // Start checking for notifications
+                this.startNotificationChecking();
+            }
+
+            createNotificationSound() {
+                // Create a simple beep sound using Web Audio API
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.notificationSound = {
+                        play: () => {
+                            const oscillator = audioContext.createOscillator();
+                            const gainNode = audioContext.createGain();
+                            
+                            oscillator.connect(gainNode);
+                            gainNode.connect(audioContext.destination);
+                            
+                            oscillator.type = 'sine';
+                            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                            
+                            oscillator.start(audioContext.currentTime);
+                            oscillator.stop(audioContext.currentTime + 0.5);
+                        }
+                    };
+                } catch (e) {
+                    console.warn('Could not create notification sound:', e);
+                    this.notificationSound = { play: () => {} }; // Silent fallback
+                }
+            }
+
+            setupEventListeners() {
+                const notificationButton = document.getElementById('notificationButton');
+                const notificationMenu = document.getElementById('notificationMenu');
+                
+                if (notificationButton && notificationMenu) {
+                    notificationButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        notificationMenu.classList.toggle('hidden');
+                        // Mark as read when opened
+                        this.markNotificationsAsViewed();
+                    });
+                    
+                    // Close menu when clicking outside
+                    document.addEventListener('click', (e) => {
+                        if (!notificationButton.contains(e.target) && !notificationMenu.contains(e.target)) {
+                            notificationMenu.classList.add('hidden');
+                        }
+                    });
+                }
+            }
+
+            startNotificationChecking() {
+                // Check immediately
+                this.checkNotifications();
+                
+                // Set up periodic checking
+                setInterval(() => {
+                    this.checkNotifications();
+                }, this.checkInterval);
+            }
+
+            async checkNotifications() {
+                try {
+                    const response = await fetch('/api/notifications/pending');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.updateNotificationDisplay(data.notifications);
+                        this.handleNewNotifications(data.notifications);
+                    } else {
+                        console.error('Failed to fetch notifications:', data.message);
+                    }
+                } catch (error) {
+                    console.error('Error checking notifications:', error);
+                }
+            }
+
+            updateNotificationDisplay(notifications) {
+                const badge = document.getElementById('notificationBadge');
+                const list = document.getElementById('notificationList');
+                
+                if (!badge || !list) return;
+
+                // Update badge
+                if (notifications.length > 0) {
+                    badge.textContent = notifications.length;
+                    badge.classList.remove('hidden');
+                    
+                    // Add pulse animation for urgent notifications
+                    const hasUrgent = notifications.some(n => ['overdue', 'due_soon'].includes(n.status));
+                    badge.classList.toggle('animate-pulse', hasUrgent);
+                } else {
+                    badge.classList.add('hidden');
+                    badge.classList.remove('animate-pulse');
+                }
+
+                // Update notification list
+                if (notifications.length === 0) {
+                    list.innerHTML = `
+                        <div class="p-4 text-center text-gray-500">
+                            <svg class="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                            <p class="text-sm">No pending notifications</p>
+                            <p class="text-xs text-gray-400 mt-1">All equipment returns are on track!</p>
+                        </div>
+                    `;
+                } else {
+                    list.innerHTML = notifications.map(notif => this.createNotificationHTML(notif)).join('');
+                }
+            }
+
+            createNotificationHTML(notification) {
+                const urgencyClass = this.getUrgencyClass(notification.status);
+                const iconClass = this.getIconClass(notification.status);
+                const textClass = this.getTextClass(notification.status);
+                
+                return `
+                    <div class="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${urgencyClass}">
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0 ${iconClass} rounded-full p-2">
+                                ${this.getNotificationIcon(notification.status)}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm font-medium text-gray-900 truncate">
+                                        ${notification.borrower_name}
+                                    </p>
+                                    <span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${textClass}">
+                                        ${notification.message}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 truncate mt-1">
+                                    📦 ${notification.equipment_name}
+                                </p>
+                                <div class="mt-2 text-xs text-gray-500 space-y-1">
+                                    <p>📍 Room: ${notification.room_number}</p>
+                                    <p>📞 ${notification.contact_number}</p>
+                                    <p>⏰ Due: ${new Date(notification.expected_return_date).toLocaleString()}</p>
+                                </div>
+                                ${notification.status === 'overdue' ? `
+                                    <div class="mt-2">
+                                        <button onclick="notificationManager.contactBorrower('${notification.contact_number}', '${notification.borrower_name}')" 
+                                                class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 transition-colors">
+                                            📞 Contact Now
+                                        </button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            getUrgencyClass(status) {
+                switch(status) {
+                    case 'overdue': return 'bg-red-50 border-l-4 border-red-400';
+                    case 'due_soon': return 'bg-orange-50 border-l-4 border-orange-400';
+                    case 'upcoming': return 'bg-yellow-50 border-l-4 border-yellow-400';
+                    default: return 'bg-blue-50 border-l-4 border-blue-400';
+                }
+            }
+
+            getIconClass(status) {
+                switch(status) {
+                    case 'overdue': return 'bg-red-100 text-red-600';
+                    case 'due_soon': return 'bg-orange-100 text-orange-600';
+                    case 'upcoming': return 'bg-yellow-100 text-yellow-600';
+                    default: return 'bg-blue-100 text-blue-600';
+                }
+            }
+
+            getTextClass(status) {
+                switch(status) {
+                    case 'overdue': return 'bg-red-100 text-red-800';
+                    case 'due_soon': return 'bg-orange-100 text-orange-800';
+                    case 'upcoming': return 'bg-yellow-100 text-yellow-800';
+                    default: return 'bg-blue-100 text-blue-800';
+                }
+            }
+
+            getNotificationIcon(status) {
+                switch(status) {
+                    case 'overdue': 
+                        return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>`;
+                    case 'due_soon':
+                    case 'upcoming':
+                        return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>`;
+                    default:
+                        return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>`;
+                }
+            }
+
+            handleNewNotifications(notifications) {
+                const currentCount = notifications.length;
+                const urgentNotifications = notifications.filter(n => ['overdue', 'due_soon'].includes(n.status));
+                
+                // Check for new urgent notifications
+                if (urgentNotifications.length > 0 && currentCount > this.lastNotificationCount) {
+                    this.alertUrgentNotifications(urgentNotifications);
+                }
+                
+                this.lastNotificationCount = currentCount;
+            }
+
+            alertUrgentNotifications(notifications) {
+                // Play sound
+                this.notificationSound.play();
+                
+                // Show browser notifications
+                if (Notification.permission === "granted") {
+                    notifications.slice(0, 3).forEach((notif, index) => {
+                        setTimeout(() => {
+                            new Notification("Equipment Return Alert", {
+                                body: `${notif.borrower_name}'s ${notif.equipment_name} is ${notif.message}`,
+                                icon: '/static/images/faculty.png',
+                                tag: `equipment-${notif.id}`,
+                                requireInteraction: notif.status === 'overdue'
+                            });
+                        }, index * 1000);
+                    });
+                }
+                
+                // Show in-page alert for overdue items
+                const overdueItems = notifications.filter(n => n.status === 'overdue');
+                if (overdueItems.length > 0) {
+                    this.showOverdueAlert(overdueItems);
+                }
+            }
+
+            showOverdueAlert(overdueItems) {
+                const alertMessage = overdueItems.length === 1 
+                    ? `${overdueItems[0].borrower_name}'s ${overdueItems[0].equipment_name} is overdue!`
+                    : `${overdueItems.length} equipment items are overdue!`;
+                    
+                showFlashMessage(alertMessage, 'error');
+                
+                // Add visual indication to the page
+                document.body.classList.add('has-overdue-items');
+                setTimeout(() => {
+                    document.body.classList.remove('has-overdue-items');
+                }, 5000);
+            }
+
+            contactBorrower(phoneNumber, borrowerName) {
+                // Create a contact modal or action
+                const message = `Hi ${borrowerName}, this is a reminder that your borrowed equipment is overdue for return. Please return it as soon as possible. Thank you!`;
+                
+                if (confirm(`Contact ${borrowerName} at ${phoneNumber}?\n\nSuggested message:\n"${message}"`)) {
+                    // Option 1: Open phone dialer
+                    window.open(`tel:${phoneNumber}`);
+                    
+                    // Option 2: Copy message to clipboard
+                    navigator.clipboard.writeText(message).then(() => {
+                        showFlashMessage('Message copied to clipboard!', 'success');
+                    }).catch(() => {
+                        showFlashMessage('Please contact manually', 'info');
+                    });
+                }
+            }
+
+            markNotificationsAsViewed() {
+                // Optional: Mark notifications as viewed in the database
+                fetch('/api/notifications/mark_read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        timestamp: new Date().toISOString()
+                    })
+                }).catch(error => {
+                    console.log('Note: Could not mark notifications as read:', error);
+                });
+            }
+        }
+
+        // Dashboard table update functions
+        function updateTable(tableType, page = null) {
+            // Prevent multiple simultaneous requests for the same table
+            if (isLoading[tableType]) return;
+            
+            // Use the stored page if none provided
+            if (page === null) {
+                page = tableType === 'borrowed' ? currentBorrowedPage : currentReturnedPage;
+            } else {
+                // Update the stored page
+                if (tableType === 'borrowed') {
+                    currentBorrowedPage = page;
+                } else {
+                    currentReturnedPage = page;
+                }
+            }
+            
+            const container = document.getElementById(`${tableType}TableContainer`);
+            
+            // Show loading state
+            container.innerHTML = `
+                <div class="flex items-center justify-center p-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>
+            `;
+            
+            isLoading[tableType] = true;
+            
+            axios.get(`/api/dashboard-data?type=${tableType}&page=${page}`)
+                .then(response => {
+                    const data = response.data;
+                    
+                    if (!data.items || !Array.isArray(data.items)) {
+                        throw new Error('Invalid data received from server');
+                    }
+                    
+                    let tableHtml = `
+                        <div class="flex flex-col min-h-[400px] justify-between">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">${tableType === 'borrowed' ? 'Issued Date' : 'Returned'}</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">S.NO</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                                            ${tableType === 'borrowed' ? '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>' : ''}
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200">
+                            `;
+    
+                    if (data.items.length === 0) {
+                        tableHtml += `
+                            <tr>
+                                <td colspan="${tableType === 'borrowed' ? 6 : 5}" class="px-6 py-4 text-center text-sm text-gray-500">
+                                    No items found
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        data.items.forEach((item, index) => {
+                            const rowNumber = ((page - 1) * 5) + index + 1;
+                            tableHtml += `
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">${rowNumber}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">${item.member_name}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">${item.date}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">${item.serial_number}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">${item.item_name}</td>
+                            `;
+                            
+                            if (tableType === 'borrowed') {
+                                tableHtml += `
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <button onclick="returnEquipment(${item.id})" 
+                                                class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-bold py-1 px-3 rounded">
+                                            Return
+                                        </button>
+                                    </td>
+                                `;
+                            }
+                            
+                            tableHtml += `</tr>`;
+                        });
+                    }
+    
+                    tableHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination moved to bottom -->
+                    <div class="mt-auto pt-4 border-t">
+                        <div class="flex justify-between items-center">
+                            <div class="text-sm text-gray-700">
+                                Showing ${data.start}-${data.end} of ${data.total} entries
+                            </div>
+                            <div class="flex space-x-2">
+                                ${page > 1 ? 
+                                    `<button onclick="updateTable('${tableType}', ${page - 1})" 
+                                            class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                                        Previous
+                                    </button>` : ''
+                                }
+                                ${data.has_more ? 
+                                    `<button onclick="updateTable('${tableType}', ${page + 1})" 
+                                            class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                                        Next
+                                    </button>` : ''
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    `;
+    
+                    container.innerHTML = tableHtml;
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    container.innerHTML = `
+                        <div class="text-center p-4 text-red-500">
+                            <p>Error loading data. Please try again.</p>
+                            <button onclick="updateTable('${tableType}', ${page})" 
+                                    class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">
+                                Retry
+                            </button>
+                        </div>
+                    `;
+                })
+                .finally(() => {
+                    isLoading[tableType] = false;
+                });
+        }
+
+        // Function to return equipment
+        function returnEquipment(borrowerId) {
+            if (!borrowerId) {
+                showFlashMessage('Invalid borrower ID', 'error');
+                return;
+            }
+
+            axios.post(`/return/${borrowerId}`, {}, {
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => {
+                // Refresh both tables after successful return
+                updateTable('borrowed', currentBorrowedPage);
+                updateTable('returned', currentReturnedPage);
+                // Show a success message
+                showFlashMessage('Equipment returned successfully!', 'success');
+            })
+            .catch(error => {
+                console.error('Error returning equipment:', error);
+                showFlashMessage('Error returning equipment. Please try again.', 'error');
+            });
+        }
+
+        // Function to show flash messages
+        function showFlashMessage(message, type) {
+            const flashContainer = document.getElementById('flashMessages');
+            const messageElement = document.createElement('div');
+            messageElement.className = `flash-message bg-${type === 'success' ? 'green' : 'red'}-500 text-white px-6 py-4 rounded-lg mb-4 shadow-lg`;
+            messageElement.textContent = message;
+            flashContainer.appendChild(messageElement);
+
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                messageElement.classList.add('fade-out');
+                setTimeout(() => {
+                    messageElement.remove();
+                }, 500);
+            }, 3000);
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize notification manager
+            window.notificationManager = new NotificationManager();
+
+            // Initialize dashboard tables
+            updateTable('borrowed', currentBorrowedPage);
+            updateTable('returned', currentReturnedPage);
+
+            // Handle temporary messages
+            {% if session.get('temp_message') %}
+                showFlashMessage("{{ session.get('temp_message').text }}", "{{ session.get('temp_message').type }}");
+                {% with _ = session.pop('temp_message', None) %}{% endwith %}
+            {% endif %}
+
+            // Set up dropdown functionality
+            const userDropdown = document.getElementById('userDropdown');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            
+            // Toggle dropdown when clicking the button
+            userDropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownMenu.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!userDropdown.contains(e.target)) {
+                    dropdownMenu.classList.remove('show');
+                }
+            });
+            
+            // Handle mobile sidebar toggle
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                });
+            }
+
+            // Auto-refresh tables every 30 seconds
+            setInterval(() => {
+                updateTable('borrowed', currentBorrowedPage);
+                updateTable('returned', currentReturnedPage);
+            }, 30000);
+        });
+
+        // Test function for development (remove in production)
+        function testNotifications() {
+            console.log('Testing notification system...');
+            if (window.notificationManager) {
+                window.notificationManager.checkNotifications();
+            }
+        }
+
+        // Show connection status indicator
+        function showConnectionStatus() {
+            const indicator = document.createElement('div');
+            indicator.id = 'connectionStatus';
+            indicator.className = 'fixed bottom-4 right-4 px-3 py-1 rounded-full text-xs font-medium z-50 transition-all';
+            indicator.innerHTML = '🟢 Notification System Active';
+            indicator.style.cssText = 'background: rgba(34, 197, 94, 0.1); color: rgb(34, 197, 94); border: 1px solid rgba(34, 197, 94, 0.2);';
+            
+            document.body.appendChild(indicator);
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                indicator.style.opacity = '0';
+                setTimeout(() => indicator.remove(), 300);
+            }, 3000);
+        }
+
+        // Show connection status after initialization
+        setTimeout(showConnectionStatus, 2000);
+    </script>
+    {% endblock %}
+</body>
+</html>

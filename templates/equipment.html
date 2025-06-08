@@ -1,0 +1,697 @@
+{% extends "dashboard.html" %}
+
+{% block title %}Equipment Management{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Equipment Management</h1>
+        <button onclick="openAddModal()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            Add New Equipment
+        </button>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Search Equipment</label>
+                <input type="text" id="searchInput" 
+                       placeholder="Search by name or serial number..." 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <!-- Category Filter -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select id="categoryFilter" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">All Categories</option>
+                    <option value="Projector">Projector</option>
+                    <option value="Fan">Fan</option>
+                    <option value="Extension">Extension</option>
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select id="statusFilter" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">All Status</option>
+                    <option value="available">Available</option>
+                    <option value="borrowed">Borrowed</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Equipment Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in equipment %}
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden" data-equipment-id="{{ item.id }}">
+            <!-- Equipment Image -->
+            <div class="relative aspect-w-16 aspect-h-9">
+                {% if item.image_path %}
+                    <img src="{{ url_for('static', filename=item.image_path) }}" 
+                         alt="{{ item.name }}" 
+                         class="w-full h-48 object-cover">
+                {% else %}
+                    <div class="w-full h-48 bg-gray-100 flex items-center justify-center">
+                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                {% endif %}
+                <div class="absolute top-2 right-2">
+                    <span class="status-badge px-2 py-1 text-xs font-semibold rounded-full 
+                        {% if item.status == 'available' %}bg-green-100 text-green-800
+                        {% elif item.status == 'borrowed' %}bg-yellow-100 text-yellow-800
+                        {% else %}bg-red-100 text-red-800{% endif %}">
+                        {{ item.status }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Equipment Details -->
+            <div class="p-4">
+                <h3 class="text-lg font-semibold text-gray-800">{{ item.name }}</h3>
+                <div class="mt-2 space-y-2">
+                    <p class="text-sm text-gray-600">
+                        <span class="font-medium">Serial Number:</span> 
+                        <span class="serial-number">{{ item.serial_number }}</span>
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        <span class="font-medium">Category:</span> 
+                        <span class="category">{{ item.category }}</span>
+                    </p>
+                    <!-- Action Buttons -->
+                    <div class="mt-4 flex space-x-2">
+                        <button onclick="openEditModal('{{ item.id }}')" 
+                                class="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium">
+                            <i class="fas fa-edit mr-1"></i>Edit
+                        </button>
+                        <button onclick="confirmDelete('{{ item.id }}')" 
+                                class="px-3 py-1 text-sm text-red-600 hover:text-red-800 font-medium">
+                            <i class="fas fa-trash-alt mr-1"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Add Equipment Modal -->
+    <div id="addModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg w-full max-w-md mx-4 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Add New Equipment</h2>
+                <button onclick="closeAddModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="addEquipmentForm" action="{{ url_for('add_equipment') }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Equipment Name</label>
+                        <input type="text" name="name" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Category</label>
+                        <select name="category" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <option value="Projector">Projector</option>
+                            <option value="Fan">Fan</option>
+                            <option value="Extension">Extension</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Serial Number</label>
+                        <input type="text" name="serial_number" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Equipment Image</label>
+                        <input type="file" name="image" accept="image/*"
+                               class="mt-1 block w-full text-sm text-gray-500">
+                        <img id="imagePreview" class="mt-2 h-32 w-auto hidden object-contain">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Condition Notes</label>
+                        <textarea name="condition_notes" rows="3"
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="closeAddModal()"
+                            class="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Add Equipment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Equipment Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg w-full max-w-md mx-4 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Edit Equipment</h2>
+                <button onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="editEquipmentForm" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Equipment Name</label>
+                        <input type="text" name="name" id="editName" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Category</label>
+                        <select name="category" id="editCategory" required 
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <option value="Projector">Projector</option>
+                            <option value="Fan">Fan</option>
+                            <option value="Extension">Extension</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Serial Number</label>
+                        <input type="text" name="serial_number" id="editSerialNumber" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Status</label>
+                        <select name="status" id="editStatus" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <option value="available">Available</option>
+                            <option value="borrowed">Borrowed</option>
+                            <option value="maintenance">Maintenance</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Equipment Image</label>
+                        <div class="mt-1 flex items-center space-x-4">
+                            <img id="currentImage" class="h-20 w-20 object-cover rounded-lg hidden">
+                            <input type="file" name="image" accept="image/*"
+                                   class="block w-full text-sm text-gray-500">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Condition Notes</label>
+                        <textarea name="condition_notes" id="editConditionNotes" rows="3"
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="closeEditModal()"
+                            class="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div id="imagePreviewModal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50">
+        <div class="relative max-w-4xl mx-auto p-4">
+            <!-- Close button -->
+            <button onclick="closeImagePreview()" class="absolute top-4 right-4 text-white hover:text-gray-300 z-50">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <!-- Image container -->
+            <div class="relative">
+                <img id="fullSizeImage" class="max-h-[85vh] max-w-full object-contain" src="" alt="Equipment Preview">
+                <!-- Equipment details overlay -->
+                <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-4">
+                    <h3 id="previewEquipmentName" class="text-xl font-semibold"></h3>
+                    <p id="previewEquipmentDetails" class="text-sm mt-2"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add this function at the start of your scripts block
+    function showMessage(message, type = 'success') {
+        const flashContainer = document.getElementById('flashMessages');
+        
+        // Clear any existing messages
+        flashContainer.innerHTML = '';
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `flash-message bg-${type === 'success' ? 'green' : 'red'}-500 text-white px-6 py-4 rounded-lg mb-4`;
+        messageDiv.textContent = message;
+        
+        flashContainer.appendChild(messageDiv);
+
+        // Remove message after 3 seconds
+        setTimeout(() => {
+            messageDiv.classList.add('fade-out');
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 500);
+        }, 3000);
+    }
+
+    // Modal functions
+    function openAddModal() {
+        document.getElementById('addModal').classList.remove('hidden');
+        document.getElementById('addModal').classList.add('flex');
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModal').classList.remove('flex');
+        document.getElementById('addModal').classList.add('hidden');
+        document.querySelector('#addEquipmentForm').reset();
+    }
+
+    function openEditModal(id) {
+        fetch(`/equipment/${id}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('editName').value = data.name;
+                document.getElementById('editCategory').value = data.category;
+                document.getElementById('editSerialNumber').value = data.serial_number;
+                document.getElementById('editStatus').value = data.status || 'available';
+                document.getElementById('editConditionNotes').value = data.condition_notes || '';
+                
+                const currentImage = document.getElementById('currentImage');
+                if (data.image_path) {
+                    currentImage.src = `/static/${data.image_path}`;
+                    currentImage.classList.remove('hidden');
+                } else {
+                    currentImage.classList.add('hidden');
+                }
+                
+                const form = document.getElementById('editEquipmentForm');
+                form.action = `/equipment/update/${id}`;
+                document.getElementById('editModal').classList.remove('hidden');
+                document.getElementById('editModal').classList.add('flex');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error fetching equipment details');
+            });
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').classList.remove('flex');
+        document.getElementById('editModal').classList.add('hidden');
+        document.getElementById('editEquipmentForm').reset();
+    }
+
+    function confirmDelete(id) {
+        if (confirm('Are you sure you want to delete this equipment?')) {
+            fetch(`/equipment/delete/${id}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the equipment card from DOM
+                    const equipmentCard = document.querySelector(`[data-equipment-id="${id}"]`);
+                    if (equipmentCard) {
+                        equipmentCard.remove();
+                    }
+                    showMessage('Equipment deleted successfully');
+                } else {
+                    throw new Error(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Failed to delete equipment', 'error');
+            });
+        }
+    }
+
+    // Form submissions
+    document.getElementById('addEquipmentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = "{{ url_for('equipment') }}";
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('Failed to add equipment', 'error');
+        });
+    });
+
+    // Add this function to create new equipment card
+    function createEquipmentCard(equipment) {
+        return `
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden" data-equipment-id="${equipment.id}">
+                <!-- Equipment Image -->
+                <div class="relative aspect-w-16 aspect-h-9">
+                    ${equipment.image_path 
+                        ? `<img src="/static/${equipment.image_path}" alt="${equipment.name}" class="w-full h-48 object-cover">`
+                        : `<div class="w-full h-48 bg-gray-100 flex items-center justify-center">
+                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>`
+                    }
+                    <div class="absolute top-2 right-2">
+                        <span class="status-badge px-2 py-1 text-xs font-semibold rounded-full 
+                            ${getStatusClass(equipment.status)}">
+                            ${equipment.status || 'available'}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Equipment Details -->
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold text-gray-800">${equipment.name}</h3>
+                    <div class="mt-2 space-y-2">
+                        <p class="text-sm text-gray-600">
+                            <span class="font-medium">Serial Number:</span> 
+                            <span class="serial-number">${equipment.serial_number}</span>
+                        </p>
+                        <p class="text-sm text-gray-600">
+                            <span class="font-medium">Category:</span> 
+                            <span class="category">${equipment.category}</span>
+                        </p>
+                        <!-- Action Buttons -->
+                        <div class="mt-4 flex space-x-2">
+                            <button onclick="openEditModal('${equipment.id}')" 
+                                    class="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                <i class="fas fa-edit mr-1"></i>Edit
+                            </button>
+                            <button onclick="confirmDelete('${equipment.id}')" 
+                                    class="px-3 py-1 text-sm text-red-600 hover:text-red-800 font-medium">
+                                <i class="fas fa-trash-alt mr-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    document.getElementById('editEquipmentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const equipmentId = this.action.split('/').pop();
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the equipment card in real-time
+                const card = document.querySelector(`[data-equipment-id="${equipmentId}"]`);
+                if (card) {
+                    card.querySelector('h3').textContent = formData.get('name');
+                    card.querySelector('.serial-number').textContent = formData.get('serial_number');
+                    card.querySelector('.category').textContent = formData.get('category');
+                    
+                    // Update status badge
+                    const statusBadge = card.querySelector('.status-badge');
+                    statusBadge.textContent = formData.get('status');
+                    statusBadge.className = `status-badge px-2 py-1 text-xs font-semibold rounded-full ${getStatusClass(formData.get('status'))}`;
+                    
+                    // Update image if a new one was uploaded
+                    const imageFile = formData.get('image');
+                    if (imageFile && imageFile.size > 0) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            card.querySelector('img').src = e.target.result;
+                        }
+                        reader.readAsDataURL(imageFile);
+                    }
+                }
+                
+                closeEditModal();
+                showMessage('Equipment updated successfully');
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('Failed to update equipment: ' + error.message, 'error');
+        });
+    });
+
+    // Helper function for status classes
+    function getStatusClass(status) {
+        switch(status.toLowerCase()) {
+            case 'available':
+                return 'bg-green-100 text-green-800';
+            case 'borrowed':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'maintenance':
+                return 'bg-red-100 text-red-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    }
+
+    // Image preview
+    function previewImage(input, previewId) {
+        const preview = document.getElementById(previewId);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Add image preview listeners
+    document.querySelector('#addModal input[type="file"]').addEventListener('change', function() {
+        previewImage(this, 'imagePreview');
+    });
+
+    document.querySelector('#editModal input[type="file"]').addEventListener('change', function() {
+        previewImage(this, 'currentImage');
+    });
+
+    // Updated Filter functionality
+    function filterEquipment() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const categoryFilter = document.getElementById('categoryFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+        
+        const equipmentCards = document.querySelectorAll('.grid > div.bg-white.rounded-lg');
+        console.log('Found equipment cards:', equipmentCards.length); // Debug log
+        
+        equipmentCards.forEach(card => {
+            let name = '';
+            let serialNumber = '';
+            let category = '';
+            let status = '';
+
+            // Get equipment details using more specific selectors
+            const nameElement = card.querySelector('h3.text-lg.font-semibold');
+            if (nameElement) {
+                name = nameElement.textContent.toLowerCase();
+            }
+
+            const paragraphs = card.querySelectorAll('p.text-sm.text-gray-600');
+            paragraphs.forEach(p => {
+                const text = p.textContent.toLowerCase();
+                if (text.includes('serial number:')) {
+                    serialNumber = text.split('serial number:')[1].trim();
+                } else if (text.includes('category:')) {
+                    category = text.split('category:')[1].trim();
+                }
+            });
+
+            const statusElement = card.querySelector('.rounded-full');
+            if (statusElement) {
+                status = statusElement.textContent.trim().toLowerCase();
+            }
+
+            // Debug logs
+            console.log('Card details:', { name, serialNumber, category, status });
+
+            // Check if matches filters
+            const matchesSearch = name.includes(searchTerm) || 
+                                serialNumber.includes(searchTerm);
+            const matchesCategory = !categoryFilter || 
+                                  category === categoryFilter.toLowerCase();
+            const matchesStatus = !statusFilter || 
+                                 status === statusFilter.toLowerCase();
+
+            // Show/hide card
+            if (matchesSearch && matchesCategory && matchesStatus) {
+                card.style.display = '';
+                console.log('Showing card:', name); // Debug log
+            } else {
+                card.style.display = 'none';
+                console.log('Hiding card:', name); // Debug log
+            }
+        });
+    }
+
+    // Add event listeners for filters with debug logs
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        console.log('Search input:', e.target.value);
+        filterEquipment();
+    });
+
+    document.getElementById('categoryFilter').addEventListener('change', function(e) {
+        console.log('Category selected:', e.target.value);
+        filterEquipment();
+    });
+
+    document.getElementById('statusFilter').addEventListener('change', function(e) {
+        console.log('Status selected:', e.target.value);
+        filterEquipment();
+    });
+
+    // Initialize filtering when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('DOM loaded, initializing filters...');
+        filterEquipment();
+    });
+
+    // Add this to handle temporary messages on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if temp_message %}
+            showMessage("{{ temp_message.text }}", "{{ temp_message.type }}");
+        {% endif %}
+    });
+
+    // Add these functions to your scripts block
+    function openImagePreview(imageElement) {
+        const card = imageElement.closest('[data-equipment-id]');
+        const modal = document.getElementById('imagePreviewModal');
+        const fullSizeImage = document.getElementById('fullSizeImage');
+        const nameElement = document.getElementById('previewEquipmentName');
+        const detailsElement = document.getElementById('previewEquipmentDetails');
+
+        // Get equipment details
+        const name = card.querySelector('h3').textContent;
+        const serialNumber = card.querySelector('.serial-number').textContent;
+        const category = card.querySelector('.category').textContent;
+        const status = card.querySelector('.status-badge').textContent;
+
+        // Set image source
+        fullSizeImage.src = imageElement.src;
+        fullSizeImage.alt = name;
+
+        // Set equipment details
+        nameElement.textContent = name;
+        detailsElement.innerHTML = `
+            Serial Number: ${serialNumber}<br>
+            Category: ${category}<br>
+            Status: ${status}
+        `;
+
+        // Show modal
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // Add keyboard listener for escape key
+        document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    function closeImagePreview() {
+        const modal = document.getElementById('imagePreviewModal');
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+        
+        // Remove keyboard listener
+        document.removeEventListener('keydown', handleEscapeKey);
+    }
+
+    function handleEscapeKey(e) {
+        if (e.key === 'Escape') {
+            closeImagePreview();
+        }
+    }
+
+    // Update your equipment card images to be clickable
+    document.addEventListener('DOMContentLoaded', function() {
+        const equipmentImages = document.querySelectorAll('[data-equipment-id] img');
+        equipmentImages.forEach(img => {
+            if (!img.closest('.h-20')) { // Exclude thumbnail images in edit modal
+                img.style.cursor = 'pointer';
+                img.addEventListener('click', function() {
+                    openImagePreview(this);
+                });
+            }
+        });
+    });
+
+    // Add click outside to close
+    document.getElementById('imagePreviewModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeImagePreview();
+        }
+    });
+</script>
+{% endblock %}

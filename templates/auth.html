@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='images/faculty.png') }}">
+    <title>Sign In / Sign Up To IECS Borrowing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: url("/static/images/cpsc.jpg");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .flash-message {
+            opacity: 1;
+            transition: all 0.5s ease-in-out;
+            transform: translateX(0);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .flash-message.fade-out {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 850px;
+            min-height: 500px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .forms-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .sign-in, .sign-up {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            transition: all 0.6s ease-in-out;
+            padding: 3rem 2rem;
+            background: white;
+        }
+
+        .sign-in {
+            left: 0;
+            z-index: 2;
+        }
+
+        .sign-up {
+            left: 0;
+            width: 50%;
+            opacity: 0;
+            z-index: 1;
+        }
+
+        .auth-container.right-panel-active .sign-in {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        .auth-container.right-panel-active .sign-up {
+            transform: translateX(100%);
+            opacity: 1;
+            z-index: 5;
+            animation: show 0.6s;
+        }
+
+        @keyframes show {
+            0%, 49.99% {
+                opacity: 0;
+                z-index: 1;
+            }
+            50%, 100% {
+                opacity: 1;
+                z-index: 5;
+            }
+        }
+
+
+        @keyframes glass-shine {
+            0% {
+                background-position: 200% center;
+            }
+            100% {
+                background-position: -200% center;
+            }
+        }
+        
+        .backdrop-blur-md {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .overlay-container {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 50%;
+            height: 100%;
+            overflow: hidden;
+            transition: transform 0.6s ease-in-out;
+            z-index: 10;
+        }
+
+        .auth-container.right-panel-active .overlay-container {
+            transform: translateX(-100%);
+        }
+
+        .overlay {
+            background: #1a73e8;
+            background: linear-gradient(to right, #1a73e8, #1557b0);
+            color: #fff;
+            position: relative;
+            left: -100%;
+            height: 100%;
+            width: 200%;
+            transform: translateX(0);
+            transition: transform 0.6s ease-in-out;
+        }
+
+        .auth-container.right-panel-active .overlay {
+            transform: translateX(50%);
+        }
+
+        .overlay-panel {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 0 40px;
+            text-align: center;
+            top: 0;
+            height: 100%;
+            width: 50%;
+            transform: translateX(0);
+            transition: transform 0.6s ease-in-out;
+        }
+
+        .overlay-left {
+            transform: translateX(-20%);
+        }
+
+        .overlay-right {
+            right: 0;
+            transform: translateX(0);
+        }
+
+        .auth-container.right-panel-active .overlay-left {
+            transform: translateX(0);
+        }
+
+        .auth-container.right-panel-active .overlay-right {
+            transform: translateX(20%);
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <!-- Replace the existing back button div with this -->
+    <div class="fixed top-4 left-4 z-50">
+        <a href="{{ url_for('index') }}" 
+           class="group flex items-center gap-2 px-6 py-2.5 rounded-full
+                  backdrop-blur-md bg-white/30 border border-white/50
+                  hover:bg-white/40 hover:shadow-lg hover:-translate-y-0.5
+                  transition-all duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg" 
+                 class="h-5 w-5 text-white group-hover:text-blue-400 transition-colors duration-300" 
+                 fill="none" 
+                 viewBox="0 0 24 24" 
+                 stroke="currentColor">
+                <path stroke-linecap="round" 
+                      stroke-linejoin="round" 
+                      stroke-width="2" 
+                      d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            <span class="text-white font-medium group-hover:text-blue-400 transition-colors duration-300">
+                Back
+            </span>
+        </a>
+    </div>
+
+    <!-- Add this near the top of the body -->
+    <div id="flashMessages" class="fixed top-4 right-4 z-50 w-80"></div>
+
+    <!-- Main Container -->
+    <div class="auth-container" id="container">
+        <div class="forms-container">
+            <!-- Sign In Form -->
+            <div class="sign-in p-8 md:p-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8">Welcome Back</h2>
+                <form action="{{ url_for('auth') }}" method="POST" class="space-y-6">
+                    <!-- Add CSRF Token -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="space-y-4">
+                        <input type="email" name="email" placeholder="Email" required 
+                            class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                        <input type="password" name="password" placeholder="Password" required 
+                            class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    </div>
+                    <button type="submit" 
+                        class="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl">
+                        Sign In
+                    </button>
+                </form>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div class="sign-up p-8 md:p-12">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8">Create Account</h2>
+                <form id="signUpForm" action="{{ url_for('auth') }}" method="POST" class="space-y-6">
+                    <!-- Add CSRF Token -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="space-y-4">
+                        <input type="text" name="name" placeholder="Full Name" required 
+                            class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                        <input type="email" name="email" placeholder="Email" required 
+                            class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                        <input type="password" 
+                            name="password" 
+                            placeholder="Password" 
+                            pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$"
+                            title="Password must be at least 8 characters long and include both letters and numbers"
+                            required 
+                            class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                            id="signupPassword">
+                        <p class="text-xs text-gray-500 mt-1">Password must be at least 8 characters long and include both letters and numbers</p>
+                    </div>
+                    <button type="submit" 
+                        class="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl">
+                        Sign Up
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Overlay Container -->
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left p-8">
+                    <h2 class="text-3xl font-bold mb-4">Welcome Back!</h2>
+                    <p class="mb-6">Already have an account? Sign in to continue your journey with us!</p>
+                    <button id="signIn" 
+                        class="px-8 py-3 border-2 border-white rounded-full font-semibold hover:bg-white hover:text-blue-600 transition-all">
+                        Sign In
+                    </button>
+                </div>
+                <div class="overlay-panel overlay-right p-8">
+                    <h2 class="text-3xl font-bold mb-4">Hello, Friend!</h2>
+                    <p class="mb-6">Enter your personal details and start journey with us</p>
+                    <button id="signUp" 
+                        class="px-8 py-3 border-2 border-white rounded-full font-semibold hover:bg-white hover:text-blue-600 transition-all">
+                        Sign Up
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    <div id="flashMessages" class="fixed top-16 right-5 z-50"></div>
+
+    <script>
+        const signUpButton = document.getElementById('signUp');
+        const signInButton = document.getElementById('signIn');
+        const container = document.getElementById('container');
+
+        signUpButton.addEventListener('click', () => {
+            container.classList.add('right-panel-active');
+        });
+
+        signInButton.addEventListener('click', () => {
+            container.classList.remove('right-panel-active');
+        });
+
+        // Flash message functionality
+        function showFlashMessage(message, category) {
+            const flashContainer = document.getElementById('flashMessages');
+            
+            // Clear any existing messages
+            flashContainer.innerHTML = '';
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flash-message bg-${category === 'success' ? 'green' : 'red'}-500 text-white px-6 py-4 rounded-lg mb-4 shadow-lg`;
+            messageDiv.style.opacity = '1';
+            messageDiv.style.transform = 'translateX(0)';
+            messageDiv.textContent = message;
+            
+            flashContainer.appendChild(messageDiv);
+
+            // Remove message after 3 seconds
+            setTimeout(() => {
+                messageDiv.classList.add('fade-out');
+                setTimeout(() => {
+                    messageDiv.remove();
+                }, 500);
+            }, 3000);
+        }
+
+        // Handle existing flash messages
+        document.addEventListener('DOMContentLoaded', () => {
+            const existingMessages = document.querySelectorAll('.flash-message');
+            existingMessages.forEach(message => {
+                setTimeout(() => {
+                    message.classList.add('fade-out');
+                    setTimeout(() => {
+                        message.remove();
+                    }, 500);
+                }, 3000);
+            });
+        });
+
+        // AJAX Sign Up
+        const signUpForm = document.getElementById('signUpForm');
+        const passwordInput = document.getElementById('signupPassword');
+
+        function validatePassword(password) {
+            // Password must be at least 8 characters and contain both letters and numbers
+            const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+            return regex.test(password);
+        }
+
+        signUpForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const password = passwordInput.value;
+            
+            if (!validatePassword(password)) {
+                showFlashMessage('Password must be at least 8 characters long and include both letters and numbers', 'error');
+                return;
+            }
+            
+            const formData = new FormData(signUpForm);
+            
+            try {
+                const response = await fetch('{{ url_for("auth") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showFlashMessage(result.message, 'success');
+                    signUpForm.reset();
+                    container.classList.remove('right-panel-active');
+                } else {
+                    showFlashMessage(result.message, 'error');
+                }
+            } catch (error) {
+                showFlashMessage('An error occurred. Please try again.', 'error');
+            }
+        });
+
+        // Add real-time password validation feedback
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            const isValid = validatePassword(password);
+            
+            if (password.length > 0) {
+                this.style.borderColor = isValid ? '#10B981' : '#EF4444';
+                this.style.backgroundColor = isValid ? '#F0FDF4' : '#FEF2F2';
+            } else {
+                this.style.borderColor = '';
+                this.style.backgroundColor = '';
+            }
+        });
+
+        // Update the login form handling
+        document.querySelector('.sign-in form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('{{ url_for("auth") }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showFlashMessage(data.message, 'success');
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 1000); // Wait 1 second before redirecting to show the message
+                } else {
+                    showFlashMessage(data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showFlashMessage('An error occurred. Please try again.', 'error');
+            }
+        });
+
+        // Replace the handleLogout function
+        function handleLogout() {
+            window.location.href = '{{ url_for("logout") }}';
+        }
+
+        // Add this to handle temporary messages on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if temp_message %}
+                showFlashMessage("{{ temp_message.text }}", "{{ temp_message.type }}");
+            {% endif %}
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1157 @@
+{% extends "dashboard.html" %}
+
+{% block title %}Equipment Borrowing System{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Left Side - Borrow Forms with Switch Mode -->
+        <div class="w-full lg:w-1/2">
+            <!-- Mode Switch Container -->
+            <div class="borrow-container bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden relative" id="borrowContainer">
+                <!-- Single Borrow Form -->
+                <div class="single-borrow p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Borrow Equipment</h2>
+                        <button onclick="switchToBulk()" 
+                                class="px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium">
+                            Switch to Bulk Mode
+                        </button>
+                    </div>
+                    
+                    <form action="{{ url_for('borrow_equipment') }}" method="POST" id="borrowForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2" for="equipment_id">
+                                    Select Equipment
+                                </label>
+                                <select name="equipment_id" id="equipment_id" required 
+                                        class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">Choose equipment...</option>
+                                    {% if equipment %}
+                                        {% for item in equipment %}
+                                        <option value="{{ item.id }}">{{ item.name }}</option>
+                                        {% endfor %}
+                                    {% endif %}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2" for="borrower_name">
+                                    Borrower's Name
+                                </label>
+                                <input type="text" name="borrower_name" id="borrower_name" required 
+                                       class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="John Doe">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2" for="room_number">
+                                    Room Name
+                                </label>
+                                <input type="text" name="room_number" id="room_number" required 
+                                       class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Room 301">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2" for="contact_number">
+                                    Contact Number
+                                </label>
+                                <input type="tel" name="contact_number" id="contact_number" required
+                                       class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="0912 345 6789">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2" for="expected_return_date">
+                                    Expected Return Date
+                                </label>
+                                <input type="datetime-local" name="expected_return_date" id="expected_return_date" required 
+                                       class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <button type="submit" 
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all">
+                                Submit Borrow Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Bulk Borrow Form -->
+                <div class="bulk-borrow p-6" style="display: none;">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Bulk Borrow Equipment</h2>
+                        <button onclick="switchToSingle()" 
+                                class="px-4 py-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium">
+                            Switch to Single Mode
+                        </button>
+                    </div>
+                    
+                    <form id="bulkBorrowForm" class="space-y-4">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <!-- Borrower Details Section -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Borrower's Name
+                                </label>
+                                <input type="text" name="borrower_name" required 
+                                       class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                       placeholder="John Doe">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Room Number
+                                </label>
+                                <input type="text" name="room_number" required 
+                                       class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                       placeholder="Room 101">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Contact Number
+                                </label>
+                                <input type="tel" name="contact_number" required 
+                                       class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                       placeholder="0912 345 6789">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Expected Return Date
+                                </label>
+                                <input type="datetime-local" name="expected_return_date" required 
+                                       class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            </div>
+                        </div>
+
+                        <!-- Equipment Selection Section -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Select Equipment
+                            </label>
+                            
+                            <!-- Select All/Clear All buttons -->
+                            <div class="flex gap-2 mb-3">
+                                <button type="button" onclick="selectAllEquipment(true)"
+                                        class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors">
+                                    Select All
+                                </button>
+                                <button type="button" onclick="selectAllEquipment(false)"
+                                        class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors">
+                                    Clear All
+                                </button>
+                            </div>
+                            
+                            <div id="equipmentList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {% if equipment %}
+                                    {% for item in equipment %}
+                                    <div class="equipment-checkbox flex items-center p-3 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                                        <input type="checkbox" 
+                                               name="equipment_ids[]" 
+                                               value="{{ item.id }}"
+                                               id="equipment_{{ item.id }}"
+                                               class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                                        <label for="equipment_{{ item.id }}" class="ml-2 block text-sm text-gray-900">
+                                            {{ item.name }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="col-span-full text-center text-gray-500 py-4">
+                                        No equipment available for borrowing
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div id="selectedCount" class="mt-2 text-sm text-gray-600">
+                                0 items selected
+                            </div>
+                            <p class="mt-2 text-sm text-gray-500">Select multiple equipment items to borrow</p>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <button type="submit" 
+                                    class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
+                                    disabled>
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2H5a2 2 0 00-2 2v2M7 7h10"></path>
+                                </svg>
+                                Submit Bulk Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Borrowers List -->
+        <div class="w-full lg:w-2/3">
+            <div class="bg-white shadow-md rounded-xl">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-2xl font-bold text-gray-800">Current Borrowers</h2>
+                    
+                    <!-- Search and Filter Controls -->
+                    <div class="mt-4 flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1">
+                            <input type="text" 
+                                   id="borrowerSearch" 
+                                   placeholder="Search borrowers..." 
+                                   class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <select id="monthFilter" class="px-4 py-2 rounded-lg border border-gray-200">
+                                <option value="">Month</option>
+                                {% for i in range(1, 13) %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                {% endfor %}
+                            </select>
+
+                            <select id="dayFilter" class="px-4 py-2 rounded-lg border border-gray-200">
+                                <option value="">Day</option>
+                                {% for i in range(1, 32) %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                {% endfor %}
+                            </select>
+
+                            <select id="yearFilter" class="px-4 py-2 rounded-lg border border-gray-200">
+                                <option value="">Year</option>
+                                {% for year in range(2024, 2026) %}
+                                    <option value="{{ year }}">{{ year }}</option>
+                                {% endfor %}
+                            </select>
+
+                            <button id="generateReport" 
+                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                Generate Report
+                            </button>
+
+                            <button onclick="resetFilters()" 
+                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors">
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto" id="borrowersTableContainer">
+                    <table class="min-w-full leading-normal">
+                        <thead>
+                            <tr>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Borrower
+                                </th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Equipment
+                                </th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Borrow Date
+                                </th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Expected Return
+                                </th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Room Name
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="borrowersTableBody">
+                            {% if borrowers %}
+                                {% for borrower in borrowers %}
+                                <tr>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <div class="flex items-center">
+                                            <div class="ml-3">
+                                                <p class="text-gray-900 whitespace-no-wrap">{{ borrower.borrower_name }}</p>
+                                                <p class="text-gray-600 whitespace-no-wrap">{{ borrower.contact_number }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <p class="text-gray-900 whitespace-no-wrap">{{ borrower.equipment_name }}</p>
+                                    </td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <p class="text-gray-900 whitespace-no-wrap">
+                                            {{ borrower.borrow_date.strftime('%Y-%m-%d %H:%M') if borrower.borrow_date else 'N/A' }}
+                                        </p>
+                                    </td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <p class="text-gray-900 whitespace-no-wrap">
+                                            {{ borrower.expected_return_date.strftime('%Y-%m-%d %H:%M') if borrower.expected_return_date else 'N/A' }}
+                                        </p>
+                                    </td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <span class="relative inline-block px-3 py-1 font-semibold leading-tight 
+                                                   {{ 'text-green-900' if borrower.status == 'returned' else 'text-yellow-900' }}">
+                                            <span aria-hidden 
+                                                  class="absolute inset-0 {{ 'bg-green-200' if borrower.status == 'returned' else 'bg-yellow-200' }} opacity-50 rounded-full">
+                                            </span>
+                                            <span class="relative">{{ borrower.status.capitalize() if borrower.status else 'Unknown' }}</span>
+                                        </span>
+                                    </td>
+                                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                        <div class="flex items-center">
+                                            <p class="text-gray-900 whitespace-no-wrap">{{ borrower.room_number }}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="px-5 py-5 text-center text-gray-500">
+                                        No borrowers found
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="px-5 py-4 bg-white border-t" id="paginationContainer">
+                    {% if total_borrowers and total_borrowers > 0 %}
+                    <div class="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+                        <!-- Results Info -->
+                        <div class="text-xs xs:text-sm text-gray-900">
+                            Showing <span class="font-medium">{{ (page - 1) * per_page + 1 }}</span> to 
+                            <span class="font-medium">{{ min(page * per_page, total_borrowers) }}</span> 
+                            of <span class="font-medium">{{ total_borrowers }}</span> entries
+                        </div>
+
+                       
+                            <!-- Page Navigation -->
+                            <div class="flex items-center space-x-1">
+                                <!-- Previous Button -->
+                                <button onclick="changePage({{ page - 1 }})"
+                                        class="px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md transition-colors {{ 'opacity-50 cursor-not-allowed' if page <= 1 }}"
+                                        {{ 'disabled' if page <= 1 }}>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                    </svg>
+                                </button>
+
+                                <!-- Page Numbers -->
+                                <div class="flex items-center space-x-1" id="pageNumbersContainer">
+                                    {% set total_pages = ((total_borrowers + per_page - 1) // per_page) if total_borrowers else 1 %}
+                                    {% set max_visible_pages = 5 %}
+                                    {% set start_page = [1, page - (max_visible_pages // 2)]|max %}
+                                    {% set end_page = [total_pages, start_page + max_visible_pages - 1]|min %}
+                                    {% if end_page - start_page + 1 < max_visible_pages %}
+                                        {% set start_page = [1, end_page - max_visible_pages + 1]|max %}
+                                    {% endif %}
+
+                                    <!-- First page button -->
+                                    {% if start_page > 1 %}
+                                        <button onclick="changePage(1)" 
+                                                class="px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md transition-colors">
+                                            1
+                                        </button>
+                                        {% if start_page > 2 %}
+                                            <span class="px-2 py-2 text-gray-500">...</span>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    <!-- Page number buttons -->
+                                    {% for i in range(start_page, end_page + 1) %}
+                                        <button onclick="changePage({{ i }})" 
+                                                class="px-3 py-2 text-sm border transition-colors rounded-md {{ 'bg-blue-600 border-blue-600 text-white' if i == page else 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50' }}">
+                                            {{ i }}
+                                        </button>
+                                    {% endfor %}
+
+                                    <!-- Last page button -->
+                                    {% if end_page < total_pages %}
+                                        {% if end_page < total_pages - 1 %}
+                                            <span class="px-2 py-2 text-gray-500">...</span>
+                                        {% endif %}
+                                        <button onclick="changePage({{ total_pages }})" 
+                                                class="px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md transition-colors">
+                                            {{ total_pages }}
+                                        </button>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Next Button -->
+                                <button onclick="changePage({{ page + 1 }})"
+                                        class="px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md transition-colors {{ 'opacity-50 cursor-not-allowed' if (page * per_page) >= total_borrowers }}"
+                                        {{ 'disabled' if (page * per_page) >= total_borrowers }}>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-xs xs:text-sm text-gray-900">
+                        No entries to display
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Switch Mode Animations */
+.borrow-container {
+    min-height: 600px;
+    transition: all 0.6s ease-in-out;
+}
+
+.single-borrow, .bulk-borrow {
+    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.borrow-container.bulk-mode .single-borrow {
+    opacity: 0;
+    transform: translateY(-20px);
+    display: none;
+}
+
+.borrow-container.bulk-mode .bulk-borrow {
+    opacity: 1;
+    transform: translateY(0);
+    display: block !important;
+}
+
+.borrow-container:not(.bulk-mode) .bulk-borrow {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.borrow-container:not(.bulk-mode) .single-borrow {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Smooth fade transitions */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.borrow-container.bulk-mode .bulk-borrow {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.borrow-container:not(.bulk-mode) .single-borrow {
+    animation: fadeInDown 0.6s ease-out;
+}
+
+/* Equipment checkbox styling */
+.equipment-checkbox:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.equipment-checkbox input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.equipment-checkbox label {
+    cursor: pointer;
+    user-select: none;
+    flex: 1;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
+/* Flash message animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+}
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+.animate-fade-out {
+    animation: fadeOut 0.3s ease-out;
+}
+
+/* Loading spinner */
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+// Global variables
+let currentPage = {{ page if page else 1 }};
+let isLoading = false;
+
+// Mode Switching Functions
+function switchToBulk() {
+    const container = document.getElementById('borrowContainer');
+    const singleForm = document.querySelector('.single-borrow');
+    const bulkForm = document.querySelector('.bulk-borrow');
+    
+    // Add transition class
+    container.classList.add('bulk-mode');
+    
+    // Animate the transition
+    setTimeout(() => {
+        singleForm.style.display = 'none';
+        bulkForm.style.display = 'block';
+    }, 300);
+}
+
+function switchToSingle() {
+    const container = document.getElementById('borrowContainer');
+    const singleForm = document.querySelector('.single-borrow');
+    const bulkForm = document.querySelector('.bulk-borrow');
+    
+    // Remove transition class
+    container.classList.remove('bulk-mode');
+    
+    // Animate the transition
+    setTimeout(() => {
+        bulkForm.style.display = 'none';
+        singleForm.style.display = 'block';
+    }, 300);
+}
+
+// Utility Functions
+function showMessage(message, type = 'info') {
+    // Remove existing messages
+    const existingMessages = document.querySelectorAll('.animate-fade-in');
+    existingMessages.forEach(msg => msg.remove());
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    } text-white z-50 animate-fade-in`;
+    messageDiv.textContent = message;
+
+    document.body.appendChild(messageDiv);
+
+    // Remove after delay
+    setTimeout(() => {
+        messageDiv.classList.add('animate-fade-out');
+        setTimeout(() => messageDiv.remove(), 300);
+    }, 3000);
+}
+
+// Equipment selection functions for bulk mode
+function updateEquipmentChecks() {
+    const checkboxes = document.querySelectorAll('input[name="equipment_ids[]"]');
+    const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+    
+    // Update the submit button state
+    const submitButton = document.querySelector('#bulkBorrowForm button[type="submit"]');
+    if (submitButton) {
+        submitButton.disabled = selectedCount === 0;
+        submitButton.classList.toggle('opacity-50', selectedCount === 0);
+    }
+
+    // Update selected count display
+    const countDisplay = document.getElementById('selectedCount');
+    if (countDisplay) {
+        countDisplay.textContent = `${selectedCount} item${selectedCount !== 1 ? 's' : ''} selected`;
+    }
+}
+
+function selectAllEquipment(select) {
+    const checkboxes = document.querySelectorAll('input[name="equipment_ids[]"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = select;
+    });
+    updateEquipmentChecks();
+}
+
+// Form Submission Handlers
+function setupSingleBorrowForm() {
+    const form = document.getElementById('borrowForm');
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<div class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>Processing...';
+        
+        fetch('{{ url_for("borrow_equipment") }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                this.reset();
+                showMessage(data.message, 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showMessage(data.message || 'An error occurred', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('An error occurred while processing your request', 'error');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        });
+    });
+}
+
+function setupBulkBorrowForm() {
+    const form = document.getElementById('bulkBorrowForm');
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const selectedEquipment = document.querySelectorAll('input[name="equipment_ids[]"]:checked');
+        if (selectedEquipment.length === 0) {
+            showMessage('Please select at least one equipment item', 'error');
+            return;
+        }
+
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<div class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>Processing...';
+
+        fetch('/bulk_borrow', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                
+                // Reset the form
+                this.reset();
+                
+                // Uncheck all checkboxes
+                const checkboxes = document.querySelectorAll('input[name="equipment_ids[]"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                
+                // Update equipment count display
+                updateEquipmentChecks();
+                
+                // Refresh the borrowers list
+                fetchFilteredData();
+                
+                // Reload the page after a short delay to refresh equipment list
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.message || 'Failed to process bulk borrow request');
+            }
+        })
+        .catch(error => {
+            showMessage(error.message || 'Error processing bulk borrow request', 'error');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        });
+    });
+}
+
+// Data Filtering and Search
+function fetchFilteredData(page = 1) {
+    if (isLoading) return;
+    isLoading = true;
+
+    const searchTerm = encodeURIComponent(document.getElementById('borrowerSearch').value || '');
+    const year = encodeURIComponent(document.getElementById('yearFilter').value || '');
+    const month = encodeURIComponent(document.getElementById('monthFilter').value || '');
+    const day = encodeURIComponent(document.getElementById('dayFilter').value || '');
+    
+    const tableBody = document.getElementById('borrowersTableBody');
+    const paginationContainer = document.getElementById('paginationContainer');
+    
+    // Show loading state
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="6" class="px-5 py-5 text-center">
+                <div class="flex justify-center items-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    <span class="ml-2 text-gray-600">Loading...</span>
+                </div>
+            </td>
+        </tr>
+    `;
+    
+    // Fade out pagination while loading
+    if (paginationContainer) {
+        paginationContainer.style.opacity = '0.5';
+    }
+
+    fetch(`/borrow?page=${page}&search=${searchTerm}&year=${year}&month=${month}&day=${day}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        if (data.borrowers && Array.isArray(data.borrowers)) {
+            tableBody.innerHTML = data.borrowers.length ? createTableRows(data.borrowers) : createEmptyTableRow();
+            
+            // Update URL with new parameters without refreshing page
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', page);
+            if (searchTerm) url.searchParams.set('search', decodeURIComponent(searchTerm));
+            else url.searchParams.delete('search');
+            if (year) url.searchParams.set('year', decodeURIComponent(year));
+            else url.searchParams.delete('year');
+            if (month) url.searchParams.set('month', decodeURIComponent(month));
+            else url.searchParams.delete('month');
+            if (day) url.searchParams.set('day', decodeURIComponent(day));
+            else url.searchParams.delete('day');
+            
+            window.history.replaceState({}, '', url);
+
+            // Always update pagination info - use data from response or fallback values
+            const currentPage = data.page || page;
+            const totalItems = data.total || data.total_borrowers || 0;
+            const itemsPerPage = data.per_page || 10;
+            
+            updatePaginationInfo(currentPage, totalItems, itemsPerPage);
+        } else {
+            tableBody.innerHTML = createEmptyTableRow();
+            // Even when no data, show pagination info
+            updatePaginationInfo(1, 0, 10);
+        }
+        
+        // Restore pagination visibility and always update pagination
+        if (paginationContainer) {
+            paginationContainer.style.opacity = '1';
+            paginationContainer.style.pointerEvents = 'auto';
+        }
+        
+        currentPage = page;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        tableBody.innerHTML = createErrorTableRow(error.message);
+        showMessage('Error loading data: ' + error.message, 'error');
+        
+        // Show error pagination state
+        updatePaginationInfo(currentPage, 0, 10);
+        
+        // Restore pagination visibility
+        if (paginationContainer) {
+            paginationContainer.style.opacity = '1';
+            paginationContainer.style.pointerEvents = 'auto';
+        }
+    })
+    .finally(() => {
+        isLoading = false;
+    });
+}
+
+function createTableRows(borrowers) {
+    return borrowers.map(borrower => `
+        <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                <div class="flex items-center">
+                    <div class="ml-3">
+                        <p class="text-gray-900 whitespace-no-wrap">${escapeHtml(borrower.borrower_name || 'N/A')}</p>
+                        <p class="text-gray-600 whitespace-no-wrap">${escapeHtml(borrower.contact_number || 'N/A')}</p>
+                    </div>
+                </div>
+            </td>
+            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                <p class="text-gray-900 whitespace-no-wrap">${escapeHtml(borrower.equipment_name || 'N/A')}</p>
+            </td>
+            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                <p class="text-gray-900 whitespace-no-wrap">${formatDate(borrower.borrow_date)}</p>
+            </td>
+            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                <p class="text-gray-900 whitespace-no-wrap">${formatDate(borrower.expected_return_date)}</p>
+            </td>
+            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                <span class="relative inline-block px-3 py-1 font-semibold leading-tight ${getStatusColor(borrower.status)}">
+                    <span aria-hidden class="absolute inset-0 ${getStatusBgColor(borrower.status)} opacity-50 rounded-full"></span>
+                    <span class="relative">${(borrower.status || 'unknown').charAt(0).toUpperCase() + (borrower.status || 'unknown').slice(1)}</span>
+                </span>
+            </td>
+            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                <div class="flex items-center">
+                    <p class="text-gray-900 whitespace-no-wrap">${escapeHtml(borrower.room_number || 'N/A')}</p>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function createEmptyTableRow() {
+    return `
+        <tr>
+            <td colspan="6" class="px-5 py-5 text-center text-gray-500">
+                <div class="py-8">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p class="mt-2 text-sm">No borrowers found</p>
+                    <p class="text-xs text-gray-400">Try adjusting your search or filter criteria</p>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+function createErrorTableRow(errorMessage = 'Error loading data') {
+    return `
+        <tr>
+            <td colspan="6" class="px-5 py-5 text-center text-red-500">
+                <div class="py-8">
+                    <svg class="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <p class="mt-2 text-sm font-medium">${escapeHtml(errorMessage)}</p>
+                    <button onclick="fetchFilteredData(currentPage)" class="mt-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm">
+                        Try Again
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+// Helper functions
+function escapeHtml(text) {
+    if (!text) return 'N/A';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Invalid Date';
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+    } catch (e) {
+        return 'Invalid Date';
+    }
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'returned': return 'text-green-900';
+        case 'approved': return 'text-yellow-900';
+        case 'pending': return 'text-blue-900';
+        case 'overdue': return 'text-red-900';
+        default: return 'text-gray-900';
+    }
+}
+
+function getStatusBgColor(status) {
+    switch(status) {
+        case 'returned': return 'bg-green-200';
+        case 'approved': return 'bg-yellow-200';
+        case 'pending': return 'bg-blue-200';
+        case 'overdue': return 'bg-red-200';
+        default: return 'bg-gray-200';
+    }
+}
+
+function resetFilters() {
+    document.getElementById('borrowerSearch').value = '';
+    document.getElementById('yearFilter').value = '';
+    document.getElementById('monthFilter').value = '';
+    document.getElementById('dayFilter').value = '';
+    fetchFilteredData(1);
+}
+
+// Pagination
+function changePage(newPage) {
+    if (newPage < 1 || isLoading) return;
+    fetchFilteredData(newPage);
+}
+
+function updatePaginationInfo(currentPage, totalItems, perPage) {
+    const paginationContainer = document.getElementById('paginationContainer');
+    if (!paginationContainer) return;
+
+    const totalPages = Math.ceil(totalItems / perPage);
+    const start = totalItems === 0 ? 0 : (currentPage - 1) * perPage + 1;
+    const end = Math.min(currentPage * perPage, totalItems);
+
+    // Calculate visible page numbers
+    let pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+        pageNumbers = Array.from({length: totalPages}, (_, i) => i + 1);
+    } else {
+        if (currentPage <= 3) {
+            pageNumbers = [1, 2, 3, 4, '...', totalPages];
+        } else if (currentPage >= totalPages - 2) {
+            pageNumbers = [1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+        } else {
+            pageNumbers = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+        }
+    }
+
+    const paginationHtml = `
+        <div class="flex flex-col sm:flex-row justify-between items-center px-5 py-4">
+            <div class="text-sm text-gray-700 mb-4 sm:mb-0">
+                Showing <span class="font-semibold">${start}</span> to 
+                <span class="font-semibold">${end}</span> of 
+                <span class="font-semibold">${totalItems}</span> entries
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <!-- Previous Button -->
+                <button onclick="changePage(${currentPage - 1})"
+                        class="px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                        ${currentPage <= 1 
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
+                        ${currentPage <= 1 ? 'disabled' : ''}>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+
+                <!-- Page Numbers -->
+                <div class="flex items-center space-x-1">
+                    ${pageNumbers.map(pageNum => {
+                        if (pageNum === '...') {
+                            return `<span class="px-3 py-2 text-gray-500">...</span>`;
+                        }
+                        return `
+                            <button onclick="changePage(${pageNum})"
+                                    class="px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                                    ${currentPage === pageNum 
+                                        ? 'bg-blue-600 text-white' 
+                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}">
+                                ${pageNum}
+                            </button>
+                        `;
+                    }).join('')}
+                </div>
+
+                <!-- Next Button -->
+                <button onclick="changePage(${currentPage + 1})"
+                        class="px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                        ${currentPage >= totalPages 
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
+                        ${currentPage >= totalPages ? 'disabled' : ''}>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+
+    paginationContainer.innerHTML = paginationHtml;
+}
+
+// Debounce function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Report generation
+function setupReportGeneration() {
+    const generateReportBtn = document.getElementById('generateReport');
+    if (!generateReportBtn) return;
+
+    generateReportBtn.addEventListener('click', function() {
+        const originalText = this.innerHTML;
+        this.innerHTML = '<span class="inline-block animate-spin mr-2">↻</span>Generating...';
+        this.disabled = true;
+
+        const searchTerm = encodeURIComponent(document.getElementById('borrowerSearch').value || '');
+        const year = encodeURIComponent(document.getElementById('yearFilter').value || '');
+        const month = encodeURIComponent(document.getElementById('monthFilter').value || '');
+        const day = encodeURIComponent(document.getElementById('dayFilter').value || '');
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/generate_report?search=${searchTerm}&year=${year}&month=${month}&day=${day}`;
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
+        
+        form.target = '_blank';
+        form.style.display = 'none';
+        document.body.appendChild(form);
+        
+        try {
+            form.submit();
+            showMessage('Report generation started. Check your downloads.', 'success');
+        } catch (error) {
+            showMessage('Error generating report: ' + error.message, 'error');
+        } finally {
+            document.body.removeChild(form);
+        }
+
+        setTimeout(() => {
+            this.innerHTML = originalText;
+            this.disabled = false;
+        }, 2000);
+    });
+}
+
+// Initialize everything when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up form handlers
+    setupSingleBorrowForm();
+    setupBulkBorrowForm();
+    setupReportGeneration();
+
+    // Set up equipment checkbox handlers for bulk mode
+    const checkboxes = document.querySelectorAll('input[name="equipment_ids[]"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateEquipmentChecks);
+    });
+
+    // Initial update for bulk form
+    updateEquipmentChecks();
+
+    // Set up search and filter handlers
+    const borrowerSearch = document.getElementById('borrowerSearch');
+    if (borrowerSearch) {
+        borrowerSearch.addEventListener('input', debounce(() => fetchFilteredData(1), 300));
+    }
+
+    const filterElements = ['yearFilter', 'monthFilter', 'dayFilter'];
+    filterElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', () => fetchFilteredData(1));
+        }
+    });
+
+    // Set minimum date for datetime inputs to current date
+    const datetimeInputs = document.querySelectorAll('input[type="datetime-local"]');
+    const now = new Date();
+    const minDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    datetimeInputs.forEach(input => {
+        input.min = minDateTime;
+    });
+
+    // Auto-focus first input in active form
+    const firstInput = document.querySelector('.single-borrow input[type="text"], .single-borrow select');
+    if (firstInput) {
+        setTimeout(() => firstInput.focus(), 100);
+    }
+
+    console.log('Borrow form initialized successfully');
+});
+
+// Handle browser back/forward navigation
+window.addEventListener('popstate', function(event) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const page = parseInt(urlParams.get('page')) || 1;
+    const search = urlParams.get('search') || '';
+    const year = urlParams.get('year') || '';
+    const month = urlParams.get('month') || '';
+    const day = urlParams.get('day') || '';
+
+    // Update form values
+    document.getElementById('borrowerSearch').value = search;
+    document.getElementById('yearFilter').value = year;
+    document.getElementById('monthFilter').value = month;
+    document.getElementById('dayFilter').value = day;
+
+    // Fetch data for the current page
+    fetchFilteredData(page);
+});
+
+// Prevent form resubmission on page refresh
+if (window.history.replaceState) {
+    window.history.replaceState(null, null, window.location.href);
+}
+</script>
+{% endblock %}

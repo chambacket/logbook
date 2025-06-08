@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Borrowing Logbook System - Flowchart</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow: hidden;
+        }
+        h1 {
+            text-align: center;
+            color: #1a237e;
+            margin-bottom: 30px;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            margin-right: 5px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            background-color: #ff4b2b;
+            color: white;
+            border-color: #ff4b2b;
+        }
+        .flowchart-container {
+            overflow: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+            margin-bottom: 20px;
+            min-height: 500px;
+        }
+        .info-box {
+            background-color: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 3px;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+        svg {
+            width: 100%;
+            height: auto;
+        }
+        .flow-node {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .flow-node:hover {
+            filter: brightness(0.9);
+            transform: translateY(-2px);
+        }
+        .flow-path {
+            stroke-dasharray: 5;
+            animation: dash 30s linear infinite;
+        }
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 1000;
+            }
+        }
+        .flowchart-content {
+            display: none;
+        }
+        .flowchart-content.active {
+            display: block;
+        }
+        .dashed-path {
+            stroke-dasharray: 5, 5;
+        }
+        .marker {
+            fill: #444;
+        }
+        .flow-text {
+            font-size: 12px;
+            fill: #333;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            max-width: 250px;
+            z-index: 100;
+            display: none;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Faculty Borrowing Logbook System</h1>
+       
+        <div class="info-box">
+            <p><strong>System Overview:</strong> This flowchart illustrates the processes in the Faculty Borrowing Logbook System for IECS department, which digitalizes the borrowing and returning of equipment like projectors, laptops, and other resources.</p>
+        </div>
+       
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('system-overview')">System Overview</div>
+            <div class="tab" onclick="showTab('authentication')">Authentication</div>
+            <div class="tab" onclick="showTab('borrowing')">Borrowing Process</div>
+            <div class="tab" onclick="showTab('returning')">Returning Process</div>
+            <div class="tab" onclick="showTab('equipment')">Equipment Management</div>
+        </div>
+       
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #1a237e;"></div>
+                <span>Start/End</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ff4b2b;"></div>
+                <span>Process</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #4CAF50;"></div>
+                <span>Decision</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #FFC107;"></div>
+                <span>Database Operation</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #03A9F4;"></div>
+                <span>User Interface</span>
+            </div>
+        </div>
+       
+        <div id="tooltip" class="tooltip"></div>
+       
+        <!-- System Overview Tab -->
+        <div id="system-overview" class="flowchart-content active">
+            <div class="flowchart-container">
+                <svg viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Define arrow marker -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" class="marker">
+                            <polygon points="0 0, 10 3.5, 0 7" />
+                        </marker>
+                    </defs>
+                   
+                    <!-- Main Components -->
+                    <!-- Authentication Module -->
+                    <rect x="400" y="50" width="200" height="80" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                        onmouseover="showTooltip(event, 'Handles user login, registration, and session management')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="500" y="90" text-anchor="middle" fill="white" font-weight="bold">Authentication Module</text>
+                   
+                    <!-- Equipment Management -->
+                    <rect x="180" y="200" width="180" height="70" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                        onmouseover="showTooltip(event, 'Add, update, and delete equipment inventory')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="270" y="235" text-anchor="middle" fill="white" font-weight="bold">Equipment Management</text>
+                   
+                    <!-- Borrowing Process -->
+                    <rect x="410" y="200" width="180" height="70" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                        onmouseover="showTooltip(event, 'Process for borrowing equipment by faculty members')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="500" y="235" text-anchor="middle" fill="white" font-weight="bold">Borrowing Process</text>
+                   
+                    <!-- Returning Process -->
+                    <rect x="640" y="200" width="180" height="70" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                        onmouseover="showTooltip(event, 'Process for returning borrowed equipment')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="730" y="235" text-anchor="middle" fill="white" font-weight="bold">Returning Process</text>
+                   
+                    <!-- Dashboard -->
+                    <rect x="400" y="320" width="200" height="70" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                        onmouseover="showTooltip(event, 'Main interface showing statistics and recent activities')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="500" y="355" text-anchor="middle" fill="white" font-weight="bold">Dashboard</text>
+                   
+                    <!-- Database -->
+                    <path d="M400,450 Q500,430 600,450 Q600,480 500,500 Q400,480 400,450 Z" fill="#FFC107" class="flow-node"
+                        onmouseover="showTooltip(event, 'MySQL database storing all system data including faculty, equipment, and borrowing records')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="500" y="475" text-anchor="middle" fill="white" font-weight="bold">Database</text>
+                   
+                    <!-- Reporting -->
+                    <rect x="400" y="550" width="200" height="70" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                        onmouseover="showTooltip(event, 'Generate reports for borrowing activities and equipment status')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="500" y="585" text-anchor="middle" fill="white" font-weight="bold">Reporting System</text>
+                   
+                    <!-- Connections -->
+                    <line x1="500" y1="130" x2="500" y2="190" stroke="#444" stroke-width="2" marker-end="url(#arrowhead)" class="flow-path"/>
+                    <line x1="500" y1="130" x2="270" y2="190" stroke="#444" stroke-width="2" marker-end="url(#arrowhead)" class="flow-path"/>
+                    <line x1="500" y1="130" x2="730" y2="190" stroke="#444" stroke-width="2" marker-end="url(#arrowhead)" class="flow-path"/>
+                   
+                    <line x1="270" y1="270" x2="420" y2="320" stroke="#444" stroke-width="2" marker-end="url(#arrowhead)" class="flow-path"/>
+                    <line x1="500" y1="270" x2="500" y2="320" stroke="#444" stroke-width="2" marker-end="url(#arrowhead)" class="flow-path"/>
+                    <line x1="730" y1="270" x2="580" y2="320" stroke="#444" stroke-width="2" marker-end="url(#arrowhead)" class="flow-path"/>
+                   
+                    <line x1="500" y1="390" x2="500" y2="450" stroke="#444" stroke-width="2" marker-end="url(#arrowhead)" class="flow-path"/>
+                    <line x1="500" y1="500" x2="500" y2="550" stroke="#444" stroke-width="2" marker-end="url(#arrowhead)" class="flow-path"/>
+                   
+                    <!-- Database connections -->
+                    <line x1="270" y1="235" x2="180" y2="235" x2="180" y2="475" x2="400" y2="475" stroke="#444" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)" class="dashed-path"/>
+                    <line x1="500" y1="235" x2="130" y2="235" x2="130" y2="475" x2="400" y2="475" stroke="#444" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)" class="dashed-path"/>
+                    <line x1="730" y1="235" x2="850" y2="235" x2="850" y2="475" x2="600" y2="475" stroke="#444" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)" class="dashed-path"/>
+                    <line x1="500" y1="585" x2="900" y2="585" x2="900" y2="475" x2="600" y2="475" stroke="#444" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)" class="dashed-path"/>
+                </svg>
+            </div>
+        </div>
+       
+        <!-- Authentication Flow Tab -->
+        <div id="authentication" class="flowchart-content">
+            <div class="flowchart-container">
+                <svg viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Define arrow marker -->
+                    <defs>
+                        <marker id="arrowhead2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" class="marker">
+                            <polygon points="0 0, 10 3.5, 0 7" />
+                        </marker>
+                    </defs>
+                   
+                    <!-- Start -->
+                    <circle cx="500" cy="50" r="40" fill="#1a237e" class="flow-node"
+                        onmouseover="showTooltip(event, 'User accesses the system')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="500" y="55" text-anchor="middle" fill="white" font-weight="bold">Start</text>
+                   
+                    <!-- Authentication Page -->
+                    <rect x="400" y="130" width="200" height="60" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                        onmouseover="showTooltip(event, 'User is presented with the authentication page')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="500" y="165" text-anchor="middle" fill="white" font-weight="bold">Authentication Page</text>
+                   
+                    <!-- Login or Register Decision -->
+                    <polygon points="500,230 580,280 500,330 420,280" fill="#4CAF50" class="flow-node"
+                        onmouseover="showTooltip(event, 'User chooses to login with existing credentials or register a new account')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="500" y="285" text-anchor="middle" fill="white" font-weight="bold">Login or Register?</text>
+                   
+                    <!-- Login Process -->
+                    <rect x="300" y="370" width="170" height="60" rx="5" ry="5" fill="#ff4b2b" class="flow-node"
+                        onmouseover="showTooltip(event, 'User enters email and password')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="385" y="405" text-anchor="middle" fill="white" font-weight="bold">Login Process</text>
+                   
+                    <!-- Registration Process -->
+                    <rect x="530" y="370" width="170" height="60" rx="5" ry="5" fill="#ff4b2b" class="flow-node"
+                        onmouseover="showTooltip(event, 'User enters name, email, password, and department')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="615" y="405" text-anchor="middle" fill="white" font-weight="bold">Registration Process</text>
+                   
+                    <!-- Validate Credentials -->
+                    <polygon points="385,470 465,500 385,530 305,500" fill="#4CAF50" class="flow-node"
+                        onmouseover="showTooltip(event, 'System validates the entered credentials')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="385" y="505" text-anchor="middle" fill="white" font-weight="bold">Credentials Valid?</text>
+                   
+                    <!-- Check Email Exists -->
+                    <polygon points="615,470 695,500 615,530 535,500" fill="#4CAF50" class="flow-node"
+                        onmouseover="showTooltip(event, 'System checks if email is already registered')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="615" y="505" text-anchor="middle" fill="white" font-weight="bold">Email Available?</text>
+                   
+                    <!-- Dashboard -->
+                    <rect x="170" y="490" width="150" height="60" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                        onmouseover="showTooltip(event, 'User is redirected to the dashboard')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="245" y="525" text-anchor="middle" fill="white" font-weight="bold">Dashboard</text>
+                   
+                    <!-- Store New User -->
+                    <rect x="780" y="470" width="150" height="60" rx="5" ry="5" fill="#FFC107" class="flow-node"
+                        onmouseover="showTooltip(event, 'New user data is stored in the database')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="855" y="505" text-anchor="middle" fill="white" font-weight="bold">Store New User</text>
+                   
+                    <!-- Error Message -->
+                    <rect x="300" y="580" width="170" height="50" rx="5" ry="5" fill="#F44336" class="flow-node"
+                        onmouseover="showTooltip(event, 'Show error message for invalid credentials')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="385" y="610" text-anchor="middle" fill="white" font-weight="bold">Invalid Credentials</text>
+                   
+                    <!-- Email Error -->
+                    <rect x="530" y="580" width="170" height="50" rx="5" ry="5" fill="#F44336" class="flow-node"
+                        onmouseover="showTooltip(event, 'Show error message for already registered email')"
+                        onmouseout="hideTooltip()"/>
+                    <text x="615" y="610" text-anchor="middle" fill="white" font-weight="bold">Email Already Exists</text>
+                   
+                    <!-- Connections -->
+                    <line x1="500" y1="90" x2="500" y2="130" stroke="#444" stroke-width="2" marker-end="url(#arrowhead2)" class="flow-path"/>
+                    <line x1="500" y1="190" x2="500" y2="230" stroke="#444" stroke-width="2" marker-end="url(#arrowhead2)" class="flow-path"/>
+                   
+                    <!-- Login path -->
+                    <line x1="420" y1="280" x2="385" y2="280" x2="385" y2="370" stroke="#444" stroke-width="2" marker-end="url(#arrowhead2)" class="flow-path"/>
+                    <text x="375" y="335" class="flow-text">Login</text>
+                   
+                    <!-- Register path -->
+                    <line x1="580" y1="280" x2="615" y2="280" x2="615" y2="370" stroke="#444" stroke-width="2" marker-end="url(#arrowhead2)" class="flow-path"/>
+                    <text x="625" y="335" class="flow-text">Register</text>
+                   
+                    <line x1="385" y1="430" x2="385" y2="470" stroke="#444" stroke-width="2" marker-end="url(#arrowhead2)" class="flow-path"/>
+                    <line x1="615" y1="430" x2="615" y2="470" stroke="#444" stroke-width="2" marker-end="url(#arrowhead2)" class="flow-path"/>
+                   
+                    <!-- Valid credentials path -->
+                    <line x1="305" y1="500" x2="245" y2="500" x2="245" y2="490" stroke="#444" stroke-width="2" marker-end="url(#arrowhead2)" class="flow-path"/>
+                    <text x="275" y="485" class="flow-text">Yes</text>
+                   
+                    <!-- Invalid credentials path -->
+                    <line x1="385" y1="530" x2="385" y2="580" stroke="#444" stroke-width="2" marker-end="url(#arrowhead2)" class="flow-path"/>
+                    <text x="395" y="555" class="flow-text">No</text>
+                   
+                    <!-- Email available path -->
+                    <line x1="695" y1="500" x2="780" y2="500" stroke="#444" stroke-width="2" marker-end="url(#arrowhead2)" class="flow-path"/>
+                    <text x="730" y="485" class="flow-text">Yes</text>
+                   
+                    <!-- Email exists path -->
+                    <line x1="615" y1="530" x2="615" y2="580" stroke="#444" stroke-width="2" marker-end="url(#arrowhead2)" class="flow-path"/>
+                    <text x="630" y="555" class="flow-text">No</text>
+                   
+                    <!-- Success registration path -->
+                    <line x1="855" y1="470" x2="855" y2="170" x2="600" y2="170" stroke="#444" stroke-width="2" marker-end="url(#arrowhead2)" class="flow-path"/>
+                    <text x="730" y="155" class="flow-text">Registration Successful</text>
+                   
+                    <!-- Return to auth page path -->
+                    <line x1="385" y1="580" x2="100" y2="580" x2="100" y2="170" x2="400" y2="170" stroke="#444" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead2)" class="dashed-path"/>
+                    <line x1="615" y1="580" x2="900" y2="580" x2="900" y2="170" x2="600" y2="170" stroke="#444" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead2)" class="dashed-path"/>
+                </svg>
+            </div>
+        </div>
+       
+        <!-- Borrowing Process Tab -->
+        <div id="borrowing" class="flowchart-content">
+            <div class="flowchart-container">
+                <svg viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Define arrow marker -->
+                    <defs>
+                        <marker id="arrowhead3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" class="marker">
+                            <polygon points="0 0, 10 3.5, 0 7" />
+                        </marker>
+                    </defs>
+                   
+                    <!-- Start -->
+                    <circle cx="500" cy="50" r="40" fill="#1a237e" class="flow-node"/>
+                    <text x="500" y="55" text-anchor="middle" fill="white" font-weight="bold">Start</text>
+                   
+                    <!-- Faculty Selects Borrow Option -->
+                    <rect x="400" y="120" width="200" height="60" rx="5" ry="5" fill="#ff4b2b" class="flow-node"
+                         onmouseover="showTooltip(event, 'Faculty member selects the borrow option from the system interface')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="500" y="155" text-anchor="middle" fill="white" font-weight="bold">Select Borrow Option</text>
+                   
+                    <!-- View Available Equipment -->
+                    <rect x="400" y="210" width="200" height="60" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                         onmouseover="showTooltip(event, 'System displays list of available equipment for borrowing')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="500" y="245" text-anchor="middle" fill="white" font-weight="bold">View Available Equipment</text>
+                   
+                    <!-- Select Equipment -->
+                    <rect x="400" y="300" width="200" height="60" rx="5" ry="5" fill="#ff4b2b" class="flow-node"
+                         onmouseover="showTooltip(event, 'Faculty selects specific equipment to borrow')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="500" y="335" text-anchor="middle" fill="white" font-weight="bold">Select Equipment</text>
+                   
+                    <!-- Fill Borrowing Form -->
+                    <rect x="400" y="390" width="200" height="60" rx="5" ry="5" fill="#ff4b2b" class="flow-node"
+                         onmouseover="showTooltip(event, 'Faculty fills form with borrower name, room number, contact number, and expected return date')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="500" y="425" text-anchor="middle" fill="white" font-weight="bold">Fill Borrowing Form</text>
+                   
+                    <!-- Check Equipment Availability -->
+                    <polygon points="500,480 580,520 500,560 420,520" fill="#4CAF50" class="flow-node"
+                         onmouseover="showTooltip(event, 'System checks if equipment is still available')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="500" y="525" text-anchor="middle" fill="white" font-weight="bold">Available?</text>
+                   
+                    <!-- Update DB - Equipment Status -->
+                    <rect x="650" y="490" width="200" height="60" rx="5" ry="5" fill="#FFC107" class="flow-node"
+                         onmouseover="showTooltip(event, 'System updates equipment status to \"borrowed\" in database')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="750" y="515" text-anchor="middle" fill="white" fill-opacity="0.9" font-weight="bold">Update Equipment Status</text>
+                    <text x="750" y="535" text-anchor="middle" fill="white" fill-opacity="0.9">(Set to 'borrowed')</text>
+                   
+                    <!-- Create Borrow Record -->
+                    <rect x="650" y="390" width="200" height="60" rx="5" ry="5" fill="#FFC107" class="flow-node"
+                         onmouseover="showTooltip(event, 'System creates a new borrowing record in the database')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="750" y="425" text-anchor="middle" fill="white" font-weight="bold">Create Borrow Record</text>
+                   
+                    <!-- Success Message -->
+                    <rect x="650" y="300" width="200" height="60" rx="5" ry="5" fill="#4CAF50" class="flow-node"
+                         onmouseover="showTooltip(event, 'System shows success message to faculty')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="750" y="335" text-anchor="middle" fill="white" font-weight="bold">Success Message</text>
+                   
+                    <!-- Not Available Message -->
+                    <rect x="150" y="490" width="200" height="60" rx="5" ry="5" fill="#F44336" class="flow-node"
+                         onmouseover="showTooltip(event, 'System shows error message that equipment is no longer available')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="250" y="520" text-anchor="middle" fill="white" font-weight="bold">Not Available Message</text>
+                   
+                    <!-- Redirect to Dashboard -->
+                    <rect x="650" y="210" width="200" height="60" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                         onmouseover="showTooltip(event, 'System redirects faculty to dashboard')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="750" y="245" text-anchor="middle" fill="white" font-weight="bold">Dashboard</text>
+                   
+                    <!-- End -->
+                    <circle cx="750" cy="120" r="40" fill="#1a237e" class="flow-node"/>
+                    <text x="750" y="125" text-anchor="middle" fill="white" font-weight="bold">End</text>
+                   
+                    <!-- Connections -->
+                    <line x1="500" y1="90" x2="500" y2="120" stroke="#444" stroke-width="2" marker-end="url(#arrowhead3)" class="flow-path"/>
+                    <line x1="500" y1="180" x2="500" y2="210" stroke="#444" stroke-width="2" marker-end="url(#arrowhead3)" class="flow-path"/>
+                    <line x1="500" y1="270" x2="500" y2="300" stroke="#444" stroke-width="2" marker-end="url(#arrowhead3)" class="flow-path"/>
+                    <line x1="500" y1="360" x2="500" y2="390" stroke="#444" stroke-width="2" marker-end="url(#arrowhead3)" class="flow-path"/>
+                    <line x1="500" y1="450" x2="500" y2="480" stroke="#444" stroke-width="2" marker-end="url(#arrowhead3)" class="flow-path"/>
+                   
+                    <!-- Available paths -->
+                    <line x1="580" y1="520" x2="650" y2="520" stroke="#444" stroke-width="2" marker-end="url(#arrowhead3)" class="flow-path"/>
+                    <text x="600" y="505" class="flow-text">Yes</text>
+                   
+                    <!-- Not available path -->
+                    <line x1="420" y1="520" x2="350" y2="520" stroke="#444" stroke-width="2" marker-end="url(#arrowhead3)" class="flow-path"/>
+                    <text x="400" y="505" class="flow-text">No</text>
+                   
+                    <line x1="750" y1="490" x2="750" y2="450" stroke="#444" stroke-width="2" marker-end="url(#arrowhead3)" class="flow-path"/>
+                    <line x1="750" y1="390" x2="750" y2="360" stroke="#444" stroke-width="2" marker-end="url(#arrowhead3)" class="flow-path"/>
+                    <line x1="750" y1="300" x2="750" y2="270" stroke="#444" stroke-width="2" marker-end="url(#arrowhead3)" class="flow-path"/>
+                    <line x1="750" y1="210" x2="750" y2="160" stroke="#444" stroke-width="2" marker-end="url(#arrowhead3)" class="flow-path"/>
+                   
+                    <!-- Return to available equipment from error -->
+                    <line x1="150" y1="520" x2="150" y2="240" x2="400" y2="240" stroke="#444" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead3)" class="dashed-path"/>
+                </svg>
+            </div>
+        </div>
+       
+        <!-- Returning Process Tab -->
+        <div id="returning" class="flowchart-content">
+            <div class="flowchart-container">
+                <svg viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Define arrow marker -->
+                    <defs>
+                        <marker id="arrowhead4" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" class="marker">
+                            <polygon points="0 0, 10 3.5, 0 7" />
+                        </marker>
+                    </defs>
+                   
+                    <!-- Start -->
+                    <circle cx="500" cy="50" r="40" fill="#1a237e" class="flow-node"/>
+                    <text x="500" y="55" text-anchor="middle" fill="white" font-weight="bold">Start</text>
+                   
+                    <!-- Faculty Accesses Dashboard -->
+                    <rect x="400" y="120" width="200" height="60" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                         onmouseover="showTooltip(event, 'Faculty member accesses the dashboard')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="500" y="155" text-anchor="middle" fill="white" font-weight="bold">Access Dashboard</text>
+                   
+                    <!-- View Borrowed Items -->
+                    <rect x="400" y="210" width="200" height="60" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                         onmouseover="showTooltip(event, 'System displays list of currently borrowed equipment')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="500" y="245" text-anchor="middle" fill="white" font-weight="bold">View Borrowed Items</text>
+                   
+                    <!-- Select Return Option -->
+                    <rect x="400" y="300" width="200" height="60" rx="5" ry="5" fill="#ff4b2b" class="flow-node"
+                         onmouseover="showTooltip(event, 'Faculty selects the return option for a specific item')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="500" y="335" text-anchor="middle" fill="white" font-weight="bold">Select Return Option</text>
+                   
+                    <!-- Verify Equipment Condition -->
+                    <polygon points="500,390 580,430 500,470 420,430" fill="#4CAF50" class="flow-node"
+                         onmouseover="showTooltip(event, 'System prompts to verify the condition of returned equipment')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="500" y="435" text-anchor="middle" fill="white" font-weight="bold">Equipment OK?</text>
+                   
+                    <!-- Update Borrower Status -->
+                    <rect x="650" y="400" width="200" height="60" rx="5" ry="5" fill="#FFC107" class="flow-node"
+                         onmouseover="showTooltip(event, 'System updates borrower record status to \"returned\"')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="750" y="425" text-anchor="middle" fill="white" fill-opacity="0.9" font-weight="bold">Update Borrower Status</text>
+                    <text x="750" y="445" text-anchor="middle" fill="white" fill-opacity="0.9">(Set to 'returned')</text>
+                   
+                    <!-- Update Equipment Status -->
+                    <rect x="650" y="490" width="200" height="60" rx="5" ry="5" fill="#FFC107" class="flow-node"
+                         onmouseover="showTooltip(event, 'System updates equipment status to \"available\"')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="750" y="515" text-anchor="middle" fill="white" fill-opacity="0.9" font-weight="bold">Update Equipment Status</text>
+                    <text x="750" y="535" text-anchor="middle" fill="white" fill-opacity="0.9">(Set to 'available')</text>
+                   
+                    <!-- Record Issue -->
+                    <rect x="250" y="400" width="200" height="60" rx="5" ry="5" fill="#F44336" class="flow-node"
+                         onmouseover="showTooltip(event, 'System records issues with returned equipment')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="350" y="425" text-anchor="middle" fill="white" font-weight="bold">Record Issues</text>
+                    <text x="350" y="445" text-anchor="middle" fill="white" font-size="12">(Add remarks to borrower record)</text>
+                   
+                    <!-- Success Message -->
+                    <rect x="650" y="300" width="200" height="60" rx="5" ry="5" fill="#4CAF50" class="flow-node"
+                         onmouseover="showTooltip(event, 'System shows success message to faculty')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="750" y="335" text-anchor="middle" fill="white" font-weight="bold">Return Success Message</text>
+                   
+                    <!-- Redirect to Dashboard -->
+                    <rect x="650" y="210" width="200" height="60" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                         onmouseover="showTooltip(event, 'System redirects faculty to updated dashboard')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="750" y="245" text-anchor="middle" fill="white" font-weight="bold">Updated Dashboard</text>
+                   
+                    <!-- End -->
+                    <circle cx="750" cy="120" r="40" fill="#1a237e" class="flow-node"/>
+                    <text x="750" y="125" text-anchor="middle" fill="white" font-weight="bold">End</text>
+                   
+                    <!-- Connections -->
+                    <line x1="500" y1="90" x2="500" y2="120" stroke="#444" stroke-width="2" marker-end="url(#arrowhead4)" class="flow-path"/>
+                    <line x1="500" y1="180" x2="500" y2="210" stroke="#444" stroke-width="2" marker-end="url(#arrowhead4)" class="flow-path"/>
+                    <line x1="500" y1="270" x2="500" y2="300" stroke="#444" stroke-width="2" marker-end="url(#arrowhead4)" class="flow-path"/>
+                    <line x1="500" y1="360" x2="500" y2="390" stroke="#444" stroke-width="2" marker-end="url(#arrowhead4)" class="flow-path"/>
+                   
+                    <!-- Equipment OK paths -->
+                    <line x1="580" y1="430" x2="650" y2="430" stroke="#444" stroke-width="2" marker-end="url(#arrowhead4)" class="flow-path"/>
+                    <text x="600" y="415" class="flow-text">Yes</text>
+                   
+                    <!-- Equipment has issues path -->
+                    <line x1="420" y1="430" x2="350" y2="430" stroke="#444" stroke-width="2" marker-end="url(#arrowhead4)" class="flow-path"/>
+                    <text x="400" y="415" class="flow-text">No</text>
+                   
+                    <line x1="750" y1="460" x2="750" y2="490" stroke="#444" stroke-width="2" marker-end="url(#arrowhead4)" class="flow-path"/>
+                    <line x1="750" y1="490" x2="750" y2="460" stroke="#444" stroke-width="2" marker-end="url(#arrowhead4)" class="flow-path"/>
+                    <line x1="750" y1="400" x2="750" y2="360" stroke="#444" stroke-width="2" marker-end="url(#arrowhead4)" class="flow-path"/>
+                    <line x1="750" y1="300" x2="750" y2="270" stroke="#444" stroke-width="2" marker-end="url(#arrowhead4)" class="flow-path"/>
+                    <line x1="750" y1="210" x2="750" y2="160" stroke="#444" stroke-width="2" marker-end="url(#arrowhead4)" class="flow-path"/>
+                   
+                    <!-- Issue recording to success -->
+                    <line x1="250" y1="430" x2="150" y2="430" x2="150" y2="330" x2="650" y2="330" stroke="#444" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead4)" class="dashed-path"/>
+                </svg>
+            </div>
+        </div>
+       
+        <!-- Equipment Management Tab -->
+        <div id="equipment" class="flowchart-content">
+            <div class="flowchart-container">
+                <svg viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Define arrow marker -->
+                    <defs>
+                        <marker id="arrowhead5" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" class="marker">
+                            <polygon points="0 0, 10 3.5, 0 7" />
+                        </marker>
+                    </defs>
+                   
+                    <!-- Start -->
+                    <circle cx="500" cy="50" r="40" fill="#1a237e" class="flow-node"/>
+                    <text x="500" y="55" text-anchor="middle" fill="white" font-weight="bold">Start</text>
+                   
+                    <!-- Faculty Accesses Equipment Page -->
+                    <rect x="400" y="120" width="200" height="60" rx="5" ry="5" fill="#03A9F4" class="flow-node"
+                         onmouseover="showTooltip(event, 'Faculty accesses the equipment management page')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="500" y="155" text-anchor="middle" fill="white" font-weight="bold">Equipment Page</text>
+                   
+                    <!-- Choose Action -->
+                    <polygon points="500,210 580,250 500,290 420,250" fill="#4CAF50" class="flow-node"
+                         onmouseover="showTooltip(event, 'Faculty chooses which action to perform on equipment')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="500" y="255" text-anchor="middle" fill="white" font-weight="bold">Choose Action</text>
+                   
+                    <!-- Add Equipment -->
+                    <rect x="150" y="300" width="180" height="60" rx="5" ry="5" fill="#ff4b2b" class="flow-node"
+                         onmouseover="showTooltip(event, 'Faculty fills form to add new equipment')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="240" y="335" text-anchor="middle" fill="white" font-weight="bold">Add Equipment</text>
+                   
+                    <!-- Edit Equipment -->
+                    <rect x="400" y="300" width="180" height="60" rx="5" ry="5" fill="#ff4b2b" class="flow-node"
+                         onmouseover="showTooltip(event, 'Faculty updates existing equipment details')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="490" y="335" text-anchor="middle" fill="white" font-weight="bold">Edit Equipment</text>
+                   
+                    <!-- Delete Equipment -->
+                    <rect x="650" y="300" width="180" height="60" rx="5" ry="5" fill="#ff4b2b" class="flow-node"
+                         onmouseover="showTooltip(event, 'Faculty deletes equipment from system')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="740" y="335" text-anchor="middle" fill="white" font-weight="bold">Delete Equipment</text>
+                   
+                    <!-- Check Serial Number -->
+                    <polygon points="240,390 320,430 240,470 160,430" fill="#4CAF50" class="flow-node"
+                         onmouseover="showTooltip(event, 'System checks if serial number already exists')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="240" y="435" text-anchor="middle" fill="white" font-weight="bold">Serial Number Exists?</text>
+                   
+                    <!-- Validate Form -->
+                    <polygon points="490,390 570,430 490,470 410,430" fill="#4CAF50" class="flow-node"
+                         onmouseover="showTooltip(event, 'System validates the form data')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="490" y="435" text-anchor="middle" fill="white" font-weight="bold">Form Valid?</text>
+                   
+                    <!-- Confirm Delete -->
+                    <polygon points="740,390 820,430 740,470 660,430" fill="#4CAF50" class="flow-node"
+                         onmouseover="showTooltip(event, 'System asks for confirmation before deleting')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="740" y="435" text-anchor="middle" fill="white" font-weight="bold">Confirm Delete?</text>
+                   
+                    <!-- Error: Serial Exists -->
+                    <rect x="100" y="500" width="180" height="60" rx="5" ry="5" fill="#F44336" class="flow-node"
+                         onmouseover="showTooltip(event, 'System shows error that serial number already exists')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="190" y="535" text-anchor="middle" fill="white" font-weight="bold">Serial Number Error</text>
+                   
+                    <!-- Insert Equipment -->
+                    <rect x="330" y="500" width="180" height="60" rx="5" ry="5" fill="#FFC107" class="flow-node"
+                         onmouseover="showTooltip(event, 'System inserts new equipment into database')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="420" y="535" text-anchor="middle" fill="white" font-weight="bold">Insert Equipment</text>
+                   
+                    <!-- Form Error -->
+                    <rect x="330" y="390" width="150" height="60" rx="5" ry="5" fill="#F44336" class="flow-node"
+                         onmouseover="showTooltip(event, 'System shows form validation errors')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="405" y="425" text-anchor="middle" fill="white" font-weight="bold">Form Error</text>
+                   
+                    <!-- Update Equipment -->
+                    <rect x="560" y="500" width="180" height="60" rx="5" ry="5" fill="#FFC107" class="flow-node"
+                         onmouseover="showTooltip(event, 'System updates equipment details in database')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="650" y="535" text-anchor="middle" fill="white" font-weight="bold">Update Equipment</text>
+                   
+                    <!-- Delete Equipment DB -->
+                    <rect x="790" y="500" width="180" height="60" rx="5" ry="5" fill="#FFC107" class="flow-node"
+                         onmouseover="showTooltip(event, 'System deletes equipment from database')"
+                         onmouseout="hideTooltip()"/>
+                    <text x="880" y="535" text-anchor="middle" fill="white" font-weight="bold">Delete Equipment</text>
+                   
+                    <!-- Connections -->
+                    <line x1="500" y1="90" x2="500" y2="120" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                    <line x1="500" y1="180" x2="500" y2="210" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                   
+                    <!-- Action paths -->
+                    <line x1="420" y1="250" x2="240" y2="250" x2="240" y2="300" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                    <text x="300" y="235" class="flow-text">Add</text>
+                   
+                    <line x1="500" y1="290" x2="500" y2="300" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                    <text x="510" y="295" class="flow-text">Edit</text>
+                   
+                    <line x1="580" y1="250" x2="740" y2="250" x2="740" y2="300" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                    <text x="670" y="235" class="flow-text">Delete</text>
+                   
+                    <!-- Add equipment paths -->
+                    <line x1="240" y1="360" x2="240" y2="390" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                    <line x1="320" y1="430" x2="420" y2="430" x2="420" y2="500" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                    <text x="350" y="415" class="flow-text">No</text>
+                   
+                    <line x1="160" y1="430" x2="130" y2="430" x2="130" y2="500" x2="100" y2="500" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                    <text x="145" y="415" class="flow-text">Yes</text>
+                   
+                    <!-- Edit equipment paths -->
+                    <line x1="490" y1="360" x2="490" y2="390" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                    <line x1="410" y1="430" x2="330" y2="430" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                    <text x="380" y="415" class="flow-text">No</text>
+                   
+                    <line x1="570" y1="430" x2="650" y2="430" x2="650" y2="500" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                    <text x="590" y="415" class="flow-text">Yes</text>
+                   
+                    <!-- Delete equipment paths -->
+                    <line x1="740" y1="360" x2="740" y2="390" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                    <line x1="660" y1="430" x2="740" y2="370" stroke="#444" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead5)" class="dashed-path"/>
+                    <text x="660" y="415" class="flow-text">No</text>
+                   
+                    <line x1="820" y1="430" x2="880" y2="430" x2="880" y2="500" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                    <text x="840" y="415" class="flow-text">Yes</text>
+                   
+                    <!-- Return to equipment page -->
+                    <line x1="190" y1="500" x2="30" y2="500" x2="30" y2="150" x2="400" y2="150" stroke="#444" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead5)" class="dashed-path"/>
+                    <line x1="420" y1="560" x2="420" y2="590" x2="500" y2="590" x2="500" y2="180" stroke="#444" stroke-width="2" marker-end="url(#arrowhead5)" class="flow-path"/>
+                    <line x1="650" y1="560" x2="650" y2="590" x2="500" y2="590" stroke="#444" stroke-width="2" stroke-dasharray="5,5"/>
+                    <line x1="880" y1="560" x2="880" y2="590" x2="500" y2="590" stroke="#444" stroke-width="2" stroke-dasharray="5,5"/>
+                    <line x1="405" y1="390" x2="970" y2="390" x2="970" y2="150" x2="600" y2="150" stroke="#444" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead5)" class="dashed-path"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+   
+    <script>
+        function showTab(tabId) {
+            // Hide all content
+            const contents = document.getElementsByClassName('flowchart-content');
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].classList.remove('active');
+            }
+           
+            // Deactivate all tabs
+            const tabs = document.getElementsByClassName('tab');
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+           
+            // Show selected content and activate tab
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+        }
+       
+        function showTooltip(event, text) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = text;
+            tooltip.style.left = (event.pageX + 15) + 'px';
+            tooltip.style.top = (event.pageY + 15) + 'px';
+            tooltip.style.display = 'block';
+        }
+       
+        function hideTooltip() {
+            document.getElementById('tooltip').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
