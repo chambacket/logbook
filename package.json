@@ -4,8 +4,9 @@
   "main": "postcss.config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "postcss static/css/main.css -o static/css/styles.css",
-    "watch": "postcss static/css/main.css -o static/css/styles.css --watch"
+    "build": "npx postcss static/css/main.css -o static/css/styles.css",
+    "watch": "npx postcss static/css/main.css -o static/css/styles.css --watch",
+    "dev": "npm run watch"
   },
   "keywords": [],
   "author": "",
