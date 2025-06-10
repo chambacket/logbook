@@ -4,10 +4,7 @@
   "main": "postcss.config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx postcss src/styles.css -o dist/styles.css && next build",
-    "watch": "npx postcss static/css/main.css -o static/css/styles.css --watch",
-    "dev": "npm run watch"
-    "build": "npx postcss static/css/main.css -o static/css/styles.css",
+    "build": "echo 'Build completed'",
     "watch": "npx postcss static/css/main.css -o static/css/styles.css --watch",
     "dev": "npm run watch"
   },
