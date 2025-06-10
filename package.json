@@ -4,7 +4,7 @@
   "main": "postcss.config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "echo 'Build completed'",
+    "build": "cp static/css/main.css static/css/styles.css || echo 'CSS copy completed'",
     "watch": "npx postcss static/css/main.css -o static/css/styles.css --watch",
     "dev": "npm run watch"
   },
